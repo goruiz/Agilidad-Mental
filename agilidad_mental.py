@@ -20,6 +20,12 @@ try:
 except ImportError:
     TKCALENDAR_AVAILABLE = False
 
+try:
+    import winsound
+    WINSOUND_AVAILABLE = True
+except ImportError:
+    WINSOUND_AVAILABLE = False
+
 
 # ==================== CONSTANTES ====================
 class Config:
@@ -587,11 +593,11 @@ class AgilidadMentalApp:
         )
         label_nombre.pack(pady=(0, 10))
 
-        # Recuadro con curso del estudiante
+        # Recuadro con curso del estudiante (mismo tamaño que el nombre)
         label_curso = tk.Label(
             cronometro_frame,
             text=self.curso,
-            font=("Arial", 12, "bold"),
+            font=("Arial", 14, "bold"),
             bg="white",
             fg="#555",
             width=20,
@@ -1223,6 +1229,14 @@ class AgilidadMentalApp:
 
             for entry in self.entries.values():
                 entry.config(state="normal")
+
+            # Bloquear el botón INICIAR después de presionarlo
+            if self.boton_iniciar:
+                self.boton_iniciar.config(
+                    state="disabled",
+                    bg="#cccccc",
+                    fg="#666666"
+                )
 
             # Habilitar el botón FINALIZAR con estilo activo
             if self.boton_finalizar:
