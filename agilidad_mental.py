@@ -513,8 +513,24 @@ class AgilidadMentalApp:
 
         nota, tiempo, pen = self.calcular_nota_final()
 
-        main_frame = tk.Frame(self.root, bg=Config.COLOR_BACKGROUND)
-        main_frame.pack(expand=True, fill="both", padx=40, pady=20)
+        # Canvas con scrollbar para contenido adaptable
+        canvas = tk.Canvas(self.root, bg=Config.COLOR_BACKGROUND, highlightthickness=0)
+        scrollbar = tk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
+
+        main_frame = tk.Frame(canvas, bg=Config.COLOR_BACKGROUND)
+
+        canvas.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True, padx=30, pady=15)
+
+        canvas_window = canvas.create_window((0, 0), window=main_frame, anchor="nw")
+
+        def configure_scroll(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+            canvas.itemconfig(canvas_window, width=event.width)
+
+        main_frame.bind("<Configure>", configure_scroll)
+        canvas.bind("<Configure>", configure_scroll)
 
         # Encabezado
         self._crear_encabezado_resultados(main_frame)
@@ -526,10 +542,10 @@ class AgilidadMentalApp:
         tk.Label(
             main_frame,
             text="─" * 80,
-            font=("Arial", 10),
+            font=("Arial", 8),
             bg=Config.COLOR_BACKGROUND,
             fg=Config.COLOR_PRIMARY
-        ).pack(pady=10)
+        ).pack(pady=5)
 
         # Tabla de resultados
         self._crear_tabla_resultados(main_frame)
@@ -538,10 +554,10 @@ class AgilidadMentalApp:
         tk.Label(
             main_frame,
             text="─" * 80,
-            font=("Arial", 10),
+            font=("Arial", 8),
             bg=Config.COLOR_BACKGROUND,
             fg=Config.COLOR_PRIMARY
-        ).pack(pady=10)
+        ).pack(pady=5)
 
         # Botones finales
         self._crear_botones_finales(main_frame)
@@ -549,12 +565,12 @@ class AgilidadMentalApp:
     def _crear_encabezado_resultados(self, parent):
         """Crea el encabezado de la pantalla de resultados finales"""
         header_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
-        header_frame.pack(fill="x", pady=(0, 10))
+        header_frame.pack(fill="x", pady=(0, 5))
 
         tk.Label(
             header_frame,
             text="¡TEST COMPLETADO!",
-            font=("Arial", 28, "bold"),
+            font=("Arial", 20, "bold"),
             bg=Config.COLOR_BACKGROUND,
             fg=Config.COLOR_PRIMARY
         ).pack()
@@ -562,28 +578,28 @@ class AgilidadMentalApp:
         tk.Label(
             header_frame,
             text=f"{self.nombre} - {self.curso}",
-            font=("Arial", 16),
+            font=("Arial", 12),
             bg=Config.COLOR_BACKGROUND
         ).pack()
 
         tk.Label(
             header_frame,
             text=f"Fecha: {self.fecha}",
-            font=("Arial", 14),
+            font=("Arial", 11),
             bg=Config.COLOR_BACKGROUND
         ).pack()
 
     def _crear_seccion_nota(self, parent, nota, penalizacion):
         """Crea la sección de la nota final"""
         nota_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
-        nota_frame.pack(fill="x", pady=10)
+        nota_frame.pack(fill="x", pady=5)
 
         color = Config.COLOR_SUCCESS if nota >= 70 else Config.COLOR_DANGER
 
         tk.Label(
             nota_frame,
             text=f"NOTA FINAL: {nota}/100",
-            font=("Arial", 36, "bold"),
+            font=("Arial", 26, "bold"),
             bg=Config.COLOR_BACKGROUND,
             fg=color
         ).pack()
@@ -591,41 +607,41 @@ class AgilidadMentalApp:
         if penalizacion > 0:
             tk.Label(
                 nota_frame,
-                text=f"Penalización aplicada: -{penalizacion} puntos (tiempo excedido)",
-                font=("Arial", 13),
+                text=f"Penalización: -{penalizacion} pts (tiempo excedido)",
+                font=("Arial", 10),
                 fg=Config.COLOR_DANGER,
                 bg=Config.COLOR_BACKGROUND
-            ).pack(pady=5)
+            ).pack(pady=3)
 
     def _crear_tabla_resultados(self, parent):
         """Crea la tabla detallada de resultados"""
         tk.Label(
             parent,
             text="DETALLE DE RESULTADOS",
-            font=("Arial", 20, "bold"),
+            font=("Arial", 14, "bold"),
             bg=Config.COLOR_BACKGROUND,
             fg=Config.COLOR_PRIMARY
-        ).pack(pady=5)
+        ).pack(pady=3)
 
         table_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
-        table_frame.pack(pady=10)
+        table_frame.pack(pady=5)
 
         # Encabezados
         headers = ["Operación", "Hasta Tabla", "Correctas", "Incorrectas"]
-        col_widths = [20, 14, 13, 13]
+        col_widths = [18, 12, 11, 11]
 
         for col, (header, width) in enumerate(zip(headers, col_widths)):
             tk.Label(
                 table_frame,
                 text=header,
-                font=("Arial", 12, "bold"),
+                font=("Arial", 10, "bold"),
                 bg=Config.COLOR_PRIMARY,
                 fg="white",
                 width=width,
                 relief="solid",
                 bd=1,
-                padx=8,
-                pady=6
+                padx=5,
+                pady=4
             ).grid(row=0, column=col, sticky="ew")
 
         # Filas de datos
@@ -656,14 +672,14 @@ class AgilidadMentalApp:
                     tk.Label(
                         parent,
                         text=value,
-                        font=("Arial", 11, "bold"),
+                        font=("Arial", 10, "bold"),
                         bg=bg_color,
                         fg="#333",
                         width=width,
                         relief="solid",
                         bd=1,
-                        padx=8,
-                        pady=4
+                        padx=5,
+                        pady=3
                     ).grid(row=row_num, column=col, sticky="ew")
 
                 row_num += 1
@@ -681,42 +697,42 @@ class AgilidadMentalApp:
             tk.Label(
                 parent,
                 text=value,
-                font=("Arial", 12, "bold"),
+                font=("Arial", 10, "bold"),
                 bg="#c8e6c9",
                 fg="#333",
                 width=width,
                 relief="solid",
                 bd=2,
-                padx=8,
-                pady=6
+                padx=5,
+                pady=4
             ).grid(row=row_num, column=col, sticky="ew")
 
     def _crear_botones_finales(self, parent):
         """Crea los botones de la pantalla final"""
         buttons_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
-        buttons_frame.pack(pady=10)
+        buttons_frame.pack(pady=8)
 
         tk.Button(
             buttons_frame,
             text="IMPRIMIR RESULTADOS",
-            font=("Arial", 15, "bold"),
-            width=22,
+            font=("Arial", 12, "bold"),
+            width=20,
             height=2,
             bg=Config.COLOR_PRIMARY,
             fg="white",
             command=self.imprimir_resultados
-        ).pack(side="left", padx=10)
+        ).pack(side="left", padx=8)
 
         tk.Button(
             buttons_frame,
             text="CERRAR PROGRAMA",
-            font=("Arial", 15, "bold"),
-            width=22,
+            font=("Arial", 12, "bold"),
+            width=20,
             height=2,
             bg=Config.COLOR_DANGER,
             fg="white",
             command=self.root.quit
-        ).pack(side="left", padx=10)
+        ).pack(side="left", padx=8)
 
     # ==================== SELECCIÓN Y VALIDACIÓN ====================
 
