@@ -301,17 +301,33 @@ class AgilidadMentalApp:
 
         self.entry_fecha.grid(row=3, column=1, pady=12)
 
+        # Frame para botones
+        buttons_frame = tk.Frame(frame, bg=Config.COLOR_BACKGROUND)
+        buttons_frame.grid(row=4, column=0, columnspan=2, pady=30)
+
         # Botón Comenzar
         tk.Button(
-            frame,
+            buttons_frame,
             text="COMENZAR TEST",
             font=("Arial", 18, "bold"),
-            width=25,
+            width=20,
             height=2,
             bg=Config.COLOR_PRIMARY,
             fg="white",
             command=self.validar_datos
-        ).grid(row=4, column=0, columnspan=2, pady=50)
+        ).pack(side="left", padx=10)
+
+        # Botón Volver
+        tk.Button(
+            buttons_frame,
+            text="VOLVER",
+            font=("Arial", 18, "bold"),
+            width=15,
+            height=2,
+            bg=Config.COLOR_DANGER,
+            fg="white",
+            command=self.mostrar_pantalla_inicio
+        ).pack(side="left", padx=10)
 
         # Panel derecho (logo) - alineado a la altura de los campos
         frame_logo = tk.Frame(main_frame, bg=Config.COLOR_BACKGROUND)
@@ -784,6 +800,17 @@ class AgilidadMentalApp:
 
         tk.Button(
             buttons_frame,
+            text="REINICIAR APLICATIVO",
+            font=("Arial", 12, "bold"),
+            width=20,
+            height=2,
+            bg=Config.COLOR_INFO,
+            fg="white",
+            command=self.reiniciar_aplicativo
+        ).pack(side="left", padx=8)
+
+        tk.Button(
+            buttons_frame,
             text="CERRAR PROGRAMA",
             font=("Arial", 12, "bold"),
             width=20,
@@ -792,6 +819,11 @@ class AgilidadMentalApp:
             fg="white",
             command=self.root.quit
         ).pack(side="left", padx=8)
+
+    def reiniciar_aplicativo(self):
+        """Reinicia el aplicativo desde la selección del nivel"""
+        self._inicializar_variables()
+        self.mostrar_pantalla_inicio()
 
     # ==================== SELECCIÓN Y VALIDACIÓN ====================
 
@@ -1079,11 +1111,11 @@ class AgilidadMentalApp:
 
     def _generar_potencia(self, tabla):
         """Genera un ejercicio de potenciación"""
-        if random.choice([True, False]) and tabla <= 10:
-            base, exp = tabla, random.randint(2, 4)
-        else:
-            base = random.randint(2, 10)
-            exp = min(tabla, 5)
+        # El exponente es igual al número de la serie (tabla)
+        exp = tabla
+
+        # La base es un número aleatorio entre 2 y 15 para tener más variedad
+        base = random.randint(2, 15)
 
         return {
             "texto": f"{base}^{exp} =",
@@ -1092,30 +1124,28 @@ class AgilidadMentalApp:
 
     def _generar_raiz(self, tabla):
         """Genera un ejercicio de radicación"""
-        # Generar diferentes tipos de ejercicios para mayor variedad
-        tipo = random.randint(1, 4)
+        # El índice de la raíz es igual al número de la serie (tabla)
+        indice_raiz = tabla
 
-        if tipo == 1:
-            # Forma 1: tabla × multiplicador pequeño
-            multiplicador = random.randint(1, 5)
-            base = tabla * multiplicador
-        elif tipo == 2:
-            # Forma 2: tabla × multiplicador grande
-            multiplicador = random.randint(6, 12)
-            base = tabla * multiplicador
-        elif tipo == 3:
-            # Forma 3: número aleatorio en rango amplio
-            base = random.randint(1, tabla * 15)
-        else:
-            # Forma 4: cuadrados perfectos comunes + offset de tabla
-            cuadrados_base = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 25, 30]
-            base = random.choice(cuadrados_base) + (tabla % 5)
+        # La base es un número aleatorio entre 2 y 15 para tener más variedad
+        base = random.randint(2, 15)
 
-        num = base ** 2
+        # Calcular el número del que se sacará la raíz
+        num = base ** indice_raiz
         resp = base
 
+        # Mostrar según el índice de la raíz
+        if indice_raiz == 1:
+            texto = f"∜{num} =".replace("∜", "¹√")  # Raíz 1
+        elif indice_raiz == 2:
+            texto = f"√{num} ="  # Raíz cuadrada (común)
+        elif indice_raiz == 3:
+            texto = f"∛{num} ="  # Raíz cúbica
+        else:
+            texto = f"ⁿ√{num} =".replace("ⁿ", str(indice_raiz))  # Raíz n-ésima
+
         return {
-            "texto": f"√{num} =",
+            "texto": texto,
             "respuesta": resp
         }
 
