@@ -121,6 +121,7 @@ class AgilidadMentalApp:
         self.operaciones_nivel = []
         self.operacion_actual = ""
         self.ejercicios = []
+        self.historial_ejercicios = []  # Guarda todos los ejercicios realizados
 
         # Referencias a widgets
         self.entries = {}
@@ -236,6 +237,32 @@ class AgilidadMentalApp:
         main_frame = tk.Frame(self.root, bg=Config.COLOR_BACKGROUND)
         main_frame.pack(fill="both", expand=True)
 
+        # Botón de volver (flecha) en la esquina superior izquierda
+        boton_volver = tk.Button(
+            main_frame,
+            text="←",
+            font=("Arial", 20),
+            bg=Config.COLOR_BACKGROUND,
+            fg="#999",
+            bd=0,
+            cursor="hand2",
+            command=self.mostrar_pantalla_inicio,
+            relief="flat",
+            padx=5,
+            pady=2
+        )
+        boton_volver.place(x=15, y=15)
+
+        # Efecto hover para el botón de volver
+        def on_enter(e):
+            boton_volver.config(fg=Config.COLOR_PRIMARY, font=("Arial", 22))
+
+        def on_leave(e):
+            boton_volver.config(fg="#999", font=("Arial", 20))
+
+        boton_volver.bind("<Enter>", on_enter)
+        boton_volver.bind("<Leave>", on_leave)
+
         # Configurar grid de 2 columnas
         main_frame.grid_columnconfigure(0, weight=3)
         main_frame.grid_columnconfigure(1, weight=1)
@@ -306,7 +333,7 @@ class AgilidadMentalApp:
 
         self.entry_fecha.grid(row=3, column=1, pady=12)
 
-        # Frame para botones
+        # Frame para botón Comenzar (centrado)
         buttons_frame = tk.Frame(frame, bg=Config.COLOR_BACKGROUND)
         buttons_frame.grid(row=4, column=0, columnspan=2, pady=30)
 
@@ -320,19 +347,7 @@ class AgilidadMentalApp:
             bg=Config.COLOR_PRIMARY,
             fg="white",
             command=self.validar_datos
-        ).pack(side="left", padx=10)
-
-        # Botón Volver
-        tk.Button(
-            buttons_frame,
-            text="VOLVER",
-            font=("Arial", 18, "bold"),
-            width=15,
-            height=2,
-            bg=Config.COLOR_DANGER,
-            fg="white",
-            command=self.mostrar_pantalla_inicio
-        ).pack(side="left", padx=10)
+        ).pack()
 
         # Panel derecho (logo) - alineado a la altura de los campos
         frame_logo = tk.Frame(main_frame, bg=Config.COLOR_BACKGROUND)
@@ -419,6 +434,10 @@ class AgilidadMentalApp:
         row_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
         row_frame.pack(pady=6, anchor="w", padx=80)
 
+        # Configurar grid para alineación perfecta
+        row_frame.grid_columnconfigure(0, minsize=250)  # Espacio fijo para la operación
+        row_frame.grid_columnconfigure(1, minsize=150)  # Espacio fijo para el input
+
         # Manejar potencias con superíndice
         if "^" in ejercicio["texto"]:
             self._crear_ejercicio_potencia(row_frame, ejercicio)
@@ -428,9 +447,8 @@ class AgilidadMentalApp:
                 text=ejercicio["texto"],
                 font=("Arial", 18, "bold"),
                 bg=Config.COLOR_BACKGROUND,
-                width=14,
                 anchor="e"
-            ).pack(side="left")
+            ).grid(row=0, column=0, sticky="e", padx=(0, 15))
 
         # Entry para la respuesta
         vcmd = (self.root.register(self.validar_numero), '%P')
@@ -445,13 +463,13 @@ class AgilidadMentalApp:
             validate="key",
             validatecommand=vcmd
         )
-        entry.pack(side="left", padx=12)
+        entry.grid(row=0, column=1, sticky="w")
         self.entries[ejercicio["id"]] = entry
 
     def _crear_ejercicio_potencia(self, parent, ejercicio):
         """Crea un ejercicio de potencia con superíndice"""
         op_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
-        op_frame.pack(side="left")
+        op_frame.grid(row=0, column=0, sticky="e", padx=(0, 15))
 
         parts = ejercicio["texto"].split("^")
         base = parts[0].strip()
@@ -476,13 +494,6 @@ class AgilidadMentalApp:
             text=" =",
             font=("Arial", 18, "bold"),
             bg=Config.COLOR_BACKGROUND
-        ).pack(side="left")
-
-        tk.Label(
-            parent,
-            text="",
-            bg=Config.COLOR_BACKGROUND,
-            width=8
         ).pack(side="left")
 
     def _crear_panel_botones(self, parent):
@@ -791,7 +802,18 @@ class AgilidadMentalApp:
     def _crear_botones_finales(self, parent):
         """Crea los botones de la pantalla final"""
         buttons_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
-        buttons_frame.pack(pady=8)
+        buttons_frame.pack(pady=(8, 50))
+
+        tk.Button(
+            buttons_frame,
+            text="VER RESPUESTAS",
+            font=("Arial", 12, "bold"),
+            width=20,
+            height=2,
+            bg=Config.COLOR_INFO,
+            fg="white",
+            command=self.mostrar_ventana_respuestas
+        ).pack(side="left", padx=8)
 
         tk.Button(
             buttons_frame,
@@ -1021,14 +1043,20 @@ class AgilidadMentalApp:
     # ==================== GENERACIÓN DE EJERCICIOS ====================
 
     def generar_ejercicios(self, operacion):
-        """Genera 12 ejercicios para la operación y tabla actual"""
+        """Genera exactamente 12 ejercicios para la operación y tabla actual"""
         ejercicios = []
         ejercicios_set = set()
         tabla = self.tabla_actual
         intentos = 0
 
-        while len(ejercicios) < Config.EJERCICIOS_POR_TABLA and intentos < Config.MAX_INTENTOS_GENERACION:
+        while len(ejercicios) < Config.EJERCICIOS_POR_TABLA:
             intentos += 1
+
+            # Si hemos intentado demasiadas veces, forzar la generación
+            if intentos > Config.MAX_INTENTOS_GENERACION:
+                # Reiniciar el contador y limpiar el set para permitir ejercicios repetidos si es necesario
+                intentos = 0
+                ejercicios_set.clear()
 
             ejercicio = self._generar_ejercicio_por_tipo(operacion, tabla)
             if ejercicio is None:
@@ -1039,6 +1067,10 @@ class AgilidadMentalApp:
                 ejercicios_set.add(texto)
                 ejercicio["id"] = len(ejercicios)
                 ejercicios.append(ejercicio)
+
+        # Validar que tenemos exactamente 12 ejercicios
+        if len(ejercicios) != Config.EJERCICIOS_POR_TABLA:
+            raise ValueError(f"Error: Se generaron {len(ejercicios)} ejercicios en lugar de {Config.EJERCICIOS_POR_TABLA}")
 
         random.shuffle(ejercicios)
 
@@ -1299,6 +1331,18 @@ class AgilidadMentalApp:
             "tiempo": self.tiempo_total
         }
 
+        # Guardar los ejercicios con las respuestas del usuario
+        for ej in self.ejercicios:
+            respuesta_usuario = self.entries[ej["id"]].get().strip()
+            self.historial_ejercicios.append({
+                "operacion": self.operacion_actual,
+                "tabla": self.tabla_actual,
+                "ejercicio": ej["texto"],
+                "respuesta_correcta": ej["respuesta"],
+                "respuesta_usuario": respuesta_usuario,
+                "correcto": respuesta_usuario == str(ej["respuesta"])
+            })
+
     def _mostrar_mensaje_finalizacion(self, correctas):
         """Muestra mensaje informativo al finalizar una operación"""
         nombre_op = self.obtener_nombre_operacion(self.operacion_actual)
@@ -1447,7 +1491,413 @@ class AgilidadMentalApp:
 
         return resultados_agrupados
 
+    # ==================== VER RESPUESTAS ====================
+
+    def mostrar_ventana_respuestas(self):
+        """Muestra una ventana con todos los ejercicios y respuestas del usuario"""
+        if not self.historial_ejercicios:
+            messagebox.showinfo("Sin datos", "No hay ejercicios realizados.")
+            return
+
+        # Crear ventana emergente
+        ventana = tk.Toplevel(self.root)
+        ventana.title("Ejercicios Realizados")
+        ventana.geometry("1000x700")
+        ventana.configure(bg=Config.COLOR_BACKGROUND)
+
+        # Centrar ventana
+        ventana.update_idletasks()
+        width = ventana.winfo_width()
+        height = ventana.winfo_height()
+        x = (ventana.winfo_screenwidth() // 2) - (width // 2)
+        y = (ventana.winfo_screenheight() // 2) - (height // 2)
+        ventana.geometry(f"{width}x{height}+{x}+{y}")
+
+        # Frame contenedor principal
+        container = tk.Frame(ventana, bg=Config.COLOR_BACKGROUND)
+        container.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Frame principal con canvas y scrollbar
+        canvas = tk.Canvas(container, bg=Config.COLOR_BACKGROUND, highlightthickness=0)
+        scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
+
+        main_frame = tk.Frame(canvas, bg=Config.COLOR_BACKGROUND)
+
+        canvas.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+
+        canvas_window = canvas.create_window((0, 0), window=main_frame, anchor="nw")
+
+        def configure_scroll(event=None):
+            # Actualizar la región de scroll después de un pequeño delay
+            ventana.update_idletasks()
+            canvas.configure(scrollregion=canvas.bbox("all"))
+            if event:
+                width_available = event.width if event.width > 1 else canvas.winfo_width()
+                canvas.itemconfig(canvas_window, width=width_available)
+
+        def on_mouse_wheel(event):
+            # Soporte para Windows y Linux
+            if event.num == 5 or event.delta < 0:
+                canvas.yview_scroll(1, "units")
+            elif event.num == 4 or event.delta > 0:
+                canvas.yview_scroll(-1, "units")
+
+        # Vincular eventos de scroll
+        main_frame.bind("<Configure>", lambda e: ventana.after(100, configure_scroll))
+        canvas.bind("<Configure>", configure_scroll)
+
+        # Habilitar scroll con rueda del mouse y touchpad
+        canvas.bind_all("<MouseWheel>", on_mouse_wheel)  # Windows
+        canvas.bind_all("<Button-4>", on_mouse_wheel)    # Linux scroll up
+        canvas.bind_all("<Button-5>", on_mouse_wheel)    # Linux scroll down
+
+        # Limpiar bindings al cerrar la ventana
+        def on_close():
+            canvas.unbind_all("<MouseWheel>")
+            canvas.unbind_all("<Button-4>")
+            canvas.unbind_all("<Button-5>")
+            ventana.destroy()
+
+        ventana.protocol("WM_DELETE_WINDOW", on_close)
+
+        # Encabezado
+        tk.Label(
+            main_frame,
+            text="EJERCICIOS REALIZADOS",
+            font=("Arial", 18, "bold"),
+            bg=Config.COLOR_BACKGROUND,
+            fg=Config.COLOR_PRIMARY
+        ).pack(pady=(0, 10))
+
+        tk.Label(
+            main_frame,
+            text=f"{self.nombre} - {self.curso}",
+            font=("Arial", 12),
+            bg=Config.COLOR_BACKGROUND
+        ).pack()
+
+        tk.Label(
+            main_frame,
+            text=f"Fecha: {self.fecha}",
+            font=("Arial", 11),
+            bg=Config.COLOR_BACKGROUND
+        ).pack(pady=(0, 15))
+
+        # Separador
+        tk.Label(
+            main_frame,
+            text="─" * 100,
+            font=("Arial", 8),
+            bg=Config.COLOR_BACKGROUND,
+            fg=Config.COLOR_PRIMARY
+        ).pack(pady=5)
+
+        # Agrupar ejercicios por operación manteniendo el orden cronológico
+        ejercicios_por_operacion = {}
+        orden_operaciones = []  # Para mantener el orden en que aparecieron
+
+        for ej in self.historial_ejercicios:
+            clave = f"{ej['operacion']}_tabla{ej['tabla']}"
+            if clave not in ejercicios_por_operacion:
+                ejercicios_por_operacion[clave] = {
+                    "operacion": ej["operacion"],
+                    "tabla": ej["tabla"],
+                    "ejercicios": []
+                }
+                orden_operaciones.append(clave)
+            ejercicios_por_operacion[clave]["ejercicios"].append(ej)
+
+        # Mostrar ejercicios en orden cronológico (como aparecieron)
+        for clave in orden_operaciones:
+            grupo = ejercicios_por_operacion[clave]
+            nombre_op = self.obtener_nombre_operacion(grupo["operacion"])
+
+            # Encabezado de sección
+            header_frame = tk.Frame(main_frame, bg="#e8f5e9", relief="solid", bd=1)
+            header_frame.pack(fill="x", pady=(10, 5))
+
+            tk.Label(
+                header_frame,
+                text=f"{nombre_op} - Tabla {grupo['tabla']}",
+                font=("Arial", 14, "bold"),
+                bg="#e8f5e9",
+                fg="#333",
+                padx=10,
+                pady=5
+            ).pack(anchor="w")
+
+            # Tabla de ejercicios centrada
+            tabla_frame = tk.Frame(main_frame, bg=Config.COLOR_BACKGROUND)
+            tabla_frame.pack(anchor="center", pady=5)
+
+            # Encabezados de columnas
+            headers = ["#", "Ejercicio", "Tu respuesta", "Respuesta correcta", "Estado"]
+            col_widths = [4, 20, 15, 18, 12]
+
+            for col, (header, width) in enumerate(zip(headers, col_widths)):
+                tk.Label(
+                    tabla_frame,
+                    text=header,
+                    font=("Arial", 9, "bold"),
+                    bg=Config.COLOR_PRIMARY,
+                    fg="white",
+                    width=width,
+                    relief="solid",
+                    bd=1,
+                    padx=5,
+                    pady=3
+                ).grid(row=0, column=col, sticky="ew")
+
+            # Filas de ejercicios
+            for idx, ejercicio in enumerate(grupo["ejercicios"], 1):
+                bg_color = "#f9f9f9" if idx % 2 == 0 else "white"
+
+                # Determinar estado
+                if ejercicio["correcto"]:
+                    estado = "Correcto"
+                    color_estado = Config.COLOR_SUCCESS
+                else:
+                    estado = "Incorrecto"
+                    color_estado = Config.COLOR_DANGER
+
+                # Preparar respuesta usuario
+                resp_usuario = ejercicio["respuesta_usuario"] if ejercicio["respuesta_usuario"] else "(sin respuesta)"
+
+                datos = [
+                    str(idx),
+                    ejercicio["ejercicio"],
+                    resp_usuario,
+                    str(ejercicio["respuesta_correcta"]),
+                    estado
+                ]
+
+                for col, (valor, width) in enumerate(zip(datos, col_widths)):
+                    fg_color = color_estado if col == 4 else "#333"
+                    font_weight = "bold" if col == 4 else "normal"
+
+                    tk.Label(
+                        tabla_frame,
+                        text=valor,
+                        font=("Arial", 9, font_weight),
+                        bg=bg_color,
+                        fg=fg_color,
+                        width=width,
+                        relief="solid",
+                        bd=1,
+                        padx=5,
+                        pady=3
+                    ).grid(row=idx, column=col, sticky="ew")
+
+        # Separador final
+        tk.Label(
+            main_frame,
+            text="─" * 100,
+            font=("Arial", 8),
+            bg=Config.COLOR_BACKGROUND,
+            fg=Config.COLOR_PRIMARY
+        ).pack(pady=10)
+
+        # Frame para botones finales con padding adicional para scroll
+        botones_frame = tk.Frame(main_frame, bg=Config.COLOR_BACKGROUND)
+        botones_frame.pack(pady=(20, 50))
+
+        # Botón para imprimir
+        tk.Button(
+            botones_frame,
+            text="IMPRIMIR EJERCICIOS",
+            font=("Arial", 13, "bold"),
+            width=25,
+            height=2,
+            bg=Config.COLOR_PRIMARY,
+            fg="white",
+            relief="raised",
+            bd=3,
+            command=self.imprimir_ejercicios
+        ).pack(side="left", padx=10)
+
+        # Botón para cerrar
+        tk.Button(
+            botones_frame,
+            text="CERRAR",
+            font=("Arial", 13, "bold"),
+            width=20,
+            height=2,
+            bg=Config.COLOR_DANGER,
+            fg="white",
+            relief="raised",
+            bd=3,
+            command=on_close
+        ).pack(side="left", padx=10)
+
     # ==================== IMPRESIÓN ====================
+
+    def imprimir_ejercicios(self):
+        """Genera e imprime un reporte HTML con todos los ejercicios realizados"""
+        if not self.historial_ejercicios:
+            messagebox.showinfo("Sin datos", "No hay ejercicios realizados.")
+            return
+
+        html_content = self._generar_html_ejercicios()
+
+        with tempfile.NamedTemporaryFile(
+            mode='w',
+            suffix='.html',
+            delete=False,
+            encoding='utf-8'
+        ) as f:
+            f.write(html_content)
+            temp_file = f.name
+
+        self._abrir_archivo_en_navegador(temp_file)
+
+    def _generar_html_ejercicios(self):
+        """Genera el contenido HTML para los ejercicios realizados"""
+        # Agrupar ejercicios por operación manteniendo el orden cronológico
+        ejercicios_por_operacion = {}
+        orden_operaciones = []  # Para mantener el orden en que aparecieron
+
+        for ej in self.historial_ejercicios:
+            clave = f"{ej['operacion']}_tabla{ej['tabla']}"
+            if clave not in ejercicios_por_operacion:
+                ejercicios_por_operacion[clave] = {
+                    "operacion": ej["operacion"],
+                    "tabla": ej["tabla"],
+                    "ejercicios": []
+                }
+                orden_operaciones.append(clave)
+            ejercicios_por_operacion[clave]["ejercicios"].append(ej)
+
+        html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ejercicios Realizados - Agilidad Mental</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            color: #333;
+        }}
+        h1 {{
+            color: {Config.COLOR_PRIMARY};
+            text-align: center;
+            margin-bottom: 10px;
+        }}
+        .info {{
+            text-align: center;
+            margin-bottom: 30px;
+        }}
+        .seccion {{
+            margin-top: 30px;
+            page-break-inside: avoid;
+        }}
+        .seccion-header {{
+            background-color: #e8f5e9;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }}
+        th {{
+            background-color: {Config.COLOR_PRIMARY};
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 12px;
+        }}
+        td {{
+            padding: 8px;
+            border: 1px solid #ddd;
+            font-size: 12px;
+        }}
+        tr:nth-child(even) {{
+            background-color: #f9f9f9;
+        }}
+        .correcto {{
+            color: {Config.COLOR_SUCCESS};
+            font-weight: bold;
+        }}
+        .incorrecto {{
+            color: {Config.COLOR_DANGER};
+            font-weight: bold;
+        }}
+        hr {{
+            border: none;
+            border-top: 2px solid {Config.COLOR_PRIMARY};
+            margin: 30px 0;
+        }}
+        @media print {{
+            body {{ margin: 20px; }}
+            .seccion {{ page-break-inside: avoid; }}
+        }}
+    </style>
+</head>
+<body>
+    <h1>EJERCICIOS REALIZADOS - TEST DE AGILIDAD MENTAL</h1>
+    <div class="info">
+        <p><strong>Estudiante:</strong> {self.nombre}</p>
+        <p><strong>Curso:</strong> {self.curso}</p>
+        <p><strong>Fecha:</strong> {self.fecha}</p>
+    </div>
+    <hr>
+"""
+
+        # Generar secciones en orden cronológico (como aparecieron)
+        for clave in orden_operaciones:
+            grupo = ejercicios_por_operacion[clave]
+            nombre_op = self.obtener_nombre_operacion(grupo["operacion"])
+
+            html += f"""
+    <div class="seccion">
+        <div class="seccion-header">{nombre_op} - Tabla {grupo['tabla']}</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%;">#</th>
+                    <th style="width: 30%;">Ejercicio</th>
+                    <th style="width: 20%;">Tu respuesta</th>
+                    <th style="width: 25%;">Respuesta correcta</th>
+                    <th style="width: 20%;">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+"""
+
+            for idx, ejercicio in enumerate(grupo["ejercicios"], 1):
+                estado_class = "correcto" if ejercicio["correcto"] else "incorrecto"
+                estado_text = "Correcto" if ejercicio["correcto"] else "Incorrecto"
+                resp_usuario = ejercicio["respuesta_usuario"] if ejercicio["respuesta_usuario"] else "(sin respuesta)"
+
+                html += f"""
+                <tr>
+                    <td>{idx}</td>
+                    <td>{ejercicio['ejercicio']}</td>
+                    <td>{resp_usuario}</td>
+                    <td>{ejercicio['respuesta_correcta']}</td>
+                    <td class="{estado_class}">{estado_text}</td>
+                </tr>
+"""
+
+            html += """
+            </tbody>
+        </table>
+    </div>
+"""
+
+        html += """
+</body>
+</html>"""
+
+        return html
 
     def imprimir_resultados(self):
         """Genera e imprime un reporte HTML de resultados"""
