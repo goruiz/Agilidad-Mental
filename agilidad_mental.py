@@ -43,6 +43,16 @@ class AgilidadMentalApp:
 
         self.mostrar_pantalla_inicio()
 
+    def validar_numero(self, valor):
+        """Valida que el input sea un número (permite números negativos y vacío)"""
+        if valor == "" or valor == "-":
+            return True
+        try:
+            int(valor)
+            return True
+        except ValueError:
+            return False
+
     def limpiar_pantalla(self):
         for widget in self.root.winfo_children():
             widget.destroy()
@@ -86,7 +96,7 @@ class AgilidadMentalApp:
         botones_container = tk.Frame(frame_der, bg="#f0f0f0")
         botones_container.place(relx=0.5, rely=0.5, anchor="center")
 
-        tk.Label(botones_container, text="Seleccione el Nivel", font=("Arial", 22, "bold"), bg="#f0f0f0", fg="#003366").pack(pady=(0, 40))
+        tk.Label(botones_container, text="Seleccione el Nivel", font=("Arial", 22, "bold"), bg="#f0f0f0", fg="#4CAF50").pack(pady=(0, 40))
 
         # Botones con tamaño exactamente igual
         for nivel in [1, 2, 3]:
@@ -121,7 +131,7 @@ class AgilidadMentalApp:
         frame = tk.Frame(self.root, bg="#f0f0f0")
         frame.pack(expand=True, fill="both", padx=120, pady=60)
 
-        tk.Label(frame, text="Datos del Estudiante", font=("Arial", 28, "bold"), bg="#f0f0f0", fg="#003366").grid(row=0, column=0, columnspan=2, pady=30)
+        tk.Label(frame, text="Datos del Estudiante", font=("Arial", 28, "bold"), bg="#f0f0f0", fg="#4CAF50").grid(row=0, column=0, columnspan=2, pady=30)
 
         tk.Label(frame, text="Nombre:", font=("Arial", 16), bg="#f0f0f0").grid(row=1, column=0, sticky="w", pady=12)
         self.entry_nombre = tk.Entry(frame, font=("Arial", 16), width=35)
@@ -140,7 +150,7 @@ class AgilidadMentalApp:
         self.entry_fecha.grid(row=3, column=1, pady=12)
 
         tk.Button(frame, text="COMENZAR TEST", font=("Arial", 18, "bold"), width=25, height=2,
-                  bg="#2196F3", fg="white", command=self.validar_datos).grid(row=4, column=0, columnspan=2, pady=50)
+                  bg="#4CAF50", fg="white", command=self.validar_datos).grid(row=4, column=0, columnspan=2, pady=50)
 
     def validar_datos(self):
         nombre = self.entry_nombre.get().strip()
@@ -190,7 +200,7 @@ class AgilidadMentalApp:
         dialog.geometry(f"+{x}+{y}")
 
         tk.Label(dialog, text=f"Ingrese hasta qué tabla desea\nrealizar en la {nombre_op}:",
-                font=("Arial", 14, "bold"), bg="#f0f0f0", fg="#003366").pack(pady=20)
+                font=("Arial", 14, "bold"), bg="#f0f0f0", fg="#4CAF50").pack(pady=20)
 
         spin_frame = tk.Frame(dialog, bg="#f0f0f0")
         spin_frame.pack(pady=10)
@@ -223,9 +233,15 @@ class AgilidadMentalApp:
     def generar_ejercicios(self, operacion):
         """Genera 12 ejercicios usando la tabla actual (self.tabla_actual)"""
         ejercicios = []
+        ejercicios_set = set()  # Para verificar duplicados
         tabla = self.tabla_actual  # Usar la tabla actual
 
-        for i in range(12):
+        intentos = 0
+        max_intentos = 1000  # Evitar bucle infinito
+
+        while len(ejercicios) < 12 and intentos < max_intentos:
+            intentos += 1
+
             if operacion == "suma":
                 # El número de la tabla SIEMPRE debe aparecer en la operación
                 if random.choice([True, False]):
@@ -296,7 +312,11 @@ class AgilidadMentalApp:
                 texto = f"√{num} ="
             else:
                 continue
-            ejercicios.append({"texto": texto, "respuesta": resp, "id": i})
+
+            # Verificar si el ejercicio ya existe (evitar duplicados)
+            if texto not in ejercicios_set:
+                ejercicios_set.add(texto)
+                ejercicios.append({"texto": texto, "respuesta": resp, "id": len(ejercicios)})
 
         # Mezclar aleatoriamente los ejercicios
         random.shuffle(ejercicios)
@@ -334,7 +354,7 @@ class AgilidadMentalApp:
             # Cambiar color según el tiempo transcurrido
             if elapsed > self.tiempo_maximo:
                 # Tiempo excedido - ya no se puede continuar
-                self.label_tiempo.config(text=f"Tiempo: {mins:02d}:{secs:02d} - ¡TIEMPO MÁXIMO!", fg="darkred")
+                self.label_tiempo.config(text=f"Tiempo: {mins:02d}:{secs:02d} - ¡TIEMPO MÁXIMO!", fg="#ff0000", bg="#000000")
                 self.detener_cronometro()
                 messagebox.showwarning("Tiempo agotado",
                     f"Has excedido el tiempo máximo de {int(self.tiempo_maximo//60)} minutos.\n"
@@ -343,10 +363,10 @@ class AgilidadMentalApp:
                 return
             elif elapsed > self.tiempo_principal:
                 # Tiempo principal superado - hay penalización
-                self.label_tiempo.config(text=f"Tiempo: {mins:02d}:{secs:02d} - Con penalización", fg="orange")
+                self.label_tiempo.config(text=f"Tiempo: {mins:02d}:{secs:02d} - Con penalización", fg="#ffff00", bg="#000000")
             else:
                 # Dentro del tiempo óptimo
-                self.label_tiempo.config(text=f"Tiempo: {mins:02d}:{secs:02d}", fg="red")
+                self.label_tiempo.config(text=f"Tiempo: {mins:02d}:{secs:02d}", fg="#ffffff", bg="#000000")
 
             self.root.after(1000, self.actualizar_cronometro)
 
@@ -394,10 +414,11 @@ class AgilidadMentalApp:
         nombre_op = nombres_operaciones.get(self.operacion_actual, self.operacion_actual.upper())
 
         tk.Label(left_frame, text=f"Operaciones de {nombre_op}",
-                 font=("Arial", 24, "bold"), bg="#f0f0f0", fg="#003366").pack(anchor="center", pady=(0, 10))
+                 font=("Arial", 24, "bold"), bg="#f0f0f0", fg="#4CAF50").pack(anchor="center", pady=(0, 10))
 
+        # Cronómetro con fondo negro y números blancos
         self.label_tiempo = tk.Label(left_frame, text="Tiempo: 00:00", font=("Arial", 20, "bold"),
-                                     bg="#f0f0f0", fg="red")
+                                     bg="#000000", fg="#ffffff", padx=20, pady=10)
         self.label_tiempo.pack(pady=(0, 15))
 
         # Mostrar las 12 operaciones directamente (ajustado para que quepan sin scroll)
@@ -427,7 +448,10 @@ class AgilidadMentalApp:
             else:
                 tk.Label(row_frame, text=ej["texto"], font=("Arial", 18, "bold"), bg="#f0f0f0", width=14, anchor="e").pack(side="left")
 
-            entry = tk.Entry(row_frame, font=("Arial", 18), width=10, justify="center", bd=2, relief="solid", state="disabled")
+            # Validación para que solo acepte números (incluyendo negativos)
+            vcmd = (self.root.register(self.validar_numero), '%P')
+            entry = tk.Entry(row_frame, font=("Arial", 18), width=10, justify="center", bd=2, relief="solid",
+                           state="disabled", validate="key", validatecommand=vcmd)
             entry.pack(side="left", padx=12)
             self.entries[ej["id"]] = entry
 
@@ -437,6 +461,7 @@ class AgilidadMentalApp:
 
         btn_style = {"font": ("Arial", 15, "bold"), "width": 20, "height": 2, "bd": 3, "relief": "raised"}
 
+        # Color verde estandarizado #4CAF50
         # Guardar referencia al botón INICIAR
         self.boton_iniciar = tk.Button(right_frame, text="INICIAR", bg="#4CAF50", fg="white",
                                        command=self.iniciar_cronometro, **btn_style)
@@ -461,7 +486,7 @@ class AgilidadMentalApp:
         # - Es la última tabla pero no es la última operación
         if not (es_ultima_tabla and es_ultima_operacion):
             boton_texto = "SIGUIENTE TABLA →" if self.tabla_actual < self.tabla_max else "SIGUIENTE OPERACIÓN →"
-            tk.Button(right_frame, text=boton_texto, bg="#9C27B0", fg="white",
+            tk.Button(right_frame, text=boton_texto, bg="#4CAF50", fg="white",
                      command=self.siguiente_operacion, **btn_style).pack(pady=15)
 
     def finalizar_operacion(self):
@@ -680,7 +705,7 @@ class AgilidadMentalApp:
                     color: #333;
                 }}
                 h1 {{
-                    color: #2e8b57;
+                    color: #4CAF50;
                     text-align: center;
                     margin-bottom: 10px;
                 }}
@@ -692,7 +717,7 @@ class AgilidadMentalApp:
                     text-align: center;
                     font-size: 36px;
                     font-weight: bold;
-                    color: {'#1e90ff' if nota >= 70 else '#ff4500'};
+                    color: {'#4CAF50' if nota >= 70 else '#f44336'};
                     margin: 30px 0;
                 }}
                 table {{
@@ -701,7 +726,7 @@ class AgilidadMentalApp:
                     margin-top: 20px;
                 }}
                 th {{
-                    background-color: #003366;
+                    background-color: #4CAF50;
                     color: white;
                     padding: 12px;
                     text-align: left;
@@ -716,16 +741,16 @@ class AgilidadMentalApp:
                 }}
                 .operacion-header {{
                     font-weight: bold;
-                    background-color: #e3f2fd;
+                    background-color: #e8f5e9;
                     font-size: 14px;
                 }}
                 .total-row {{
                     font-weight: bold;
-                    background-color: #fff3cd;
+                    background-color: #c8e6c9;
                 }}
                 hr {{
                     border: none;
-                    border-top: 2px solid #003366;
+                    border-top: 2px solid #4CAF50;
                     margin: 30px 0;
                 }}
                 @media print {{
@@ -741,11 +766,11 @@ class AgilidadMentalApp:
                 <p><strong>Fecha:</strong> {self.fecha}</p>
             </div>
             <div class="nota">NOTA FINAL: {nota}/100</div>
-            {'<p style="text-align: center; color: red;"><strong>Penalización aplicada: -' + str(pen) + ' puntos (tiempo excedido)</strong></p>' if pen > 0 else ''}
+            {'<p style="text-align: center; color: #f44336;"><strong>Penalización aplicada: -' + str(pen) + ' puntos (tiempo excedido)</strong></p>' if pen > 0 else ''}
 
             <hr>
 
-            <h2 style="color: #003366;">DETALLE DE RESULTADOS</h2>
+            <h2 style="color: #4CAF50;">DETALLE DE RESULTADOS</h2>
 
             <table>
                 <thead>
@@ -754,7 +779,6 @@ class AgilidadMentalApp:
                         <th>Hasta Tabla</th>
                         <th>Correctas</th>
                         <th>Incorrectas</th>
-                        <th>Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -776,7 +800,6 @@ class AgilidadMentalApp:
 
                 total_correctas = sum(t["correctas"] for t in tablas)
                 total_incorrectas = sum(t["incorrectas"] for t in tablas)
-                total_preguntas = len(tablas) * 12
                 tabla_max = max(t["tabla"] for t in tablas)
 
                 html_content += f"""
@@ -785,21 +808,18 @@ class AgilidadMentalApp:
                         <td><strong>{tabla_max}</strong></td>
                         <td><strong>{total_correctas}</strong></td>
                         <td><strong>{total_incorrectas}</strong></td>
-                        <td><strong>{total_preguntas}</strong></td>
                     </tr>
                 """
 
         # Calcular totales generales
         total_general_correctas = sum(r["correctas"] for r in self.resultados_operacion.values())
         total_general_incorrectas = sum(r["incorrectas"] for r in self.resultados_operacion.values())
-        total_general_preguntas = len(self.resultados_operacion) * 12
 
         html_content += f"""
                     <tr class="total-row">
                         <td colspan="2"><strong>TOTAL GENERAL</strong></td>
                         <td><strong>{total_general_correctas}</strong></td>
                         <td><strong>{total_general_incorrectas}</strong></td>
-                        <td><strong>{total_general_preguntas}</strong></td>
                     </tr>
                 </tbody>
             </table>
@@ -829,42 +849,33 @@ class AgilidadMentalApp:
         self.limpiar_pantalla()
         nota, tiempo, pen = self.calcular_nota_final()
 
-        # Frame principal con scroll
+        # Frame principal sin scroll
         main_frame = tk.Frame(self.root, bg="#f0f0f0")
-        main_frame.pack(expand=True, fill="both", padx=40, pady=40)
+        main_frame.pack(expand=True, fill="both", padx=40, pady=20)
 
-        # Canvas y scrollbar para manejar contenido largo
-        canvas = tk.Canvas(main_frame, bg="#f0f0f0", highlightthickness=0)
-        scrollbar = tk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
-        scrollable_frame = tk.Frame(canvas, bg="#f0f0f0")
+        # Sección superior: título y datos
+        header_frame = tk.Frame(main_frame, bg="#f0f0f0")
+        header_frame.pack(fill="x", pady=(0, 10))
 
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
+        tk.Label(header_frame, text="¡TEST COMPLETADO!", font=("Arial", 28, "bold"), bg="#f0f0f0", fg="#4CAF50").pack()
+        tk.Label(header_frame, text=f"{self.nombre} - {self.curso}", font=("Arial", 16), bg="#f0f0f0").pack()
+        tk.Label(header_frame, text=f"Fecha: {self.fecha}", font=("Arial", 14), bg="#f0f0f0").pack()
 
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
+        # Sección central: nota y penalización
+        nota_frame = tk.Frame(main_frame, bg="#f0f0f0")
+        nota_frame.pack(fill="x", pady=10)
 
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-
-        # Contenido
-        tk.Label(scrollable_frame, text="¡TEST COMPLETADO!", font=("Arial", 32, "bold"), bg="#f0f0f0", fg="#2e8b57").pack(pady=20)
-        tk.Label(scrollable_frame, text=f"{self.nombre} - {self.curso}", font=("Arial", 20), bg="#f0f0f0").pack(pady=5)
-        tk.Label(scrollable_frame, text=f"Fecha: {self.fecha}", font=("Arial", 16), bg="#f0f0f0").pack(pady=5)
-
-        color = "#1e90ff" if nota >= 70 else "#ff4500"
-        tk.Label(scrollable_frame, text=f"NOTA FINAL: {nota}/100", font=("Arial", 48, "bold"), bg="#f0f0f0", fg=color).pack(pady=30)
+        color = "#4CAF50" if nota >= 70 else "#f44336"
+        tk.Label(nota_frame, text=f"NOTA FINAL: {nota}/100", font=("Arial", 36, "bold"), bg="#f0f0f0", fg=color).pack()
 
         if pen > 0:
-            tk.Label(scrollable_frame, text=f"Penalización aplicada: -{pen} puntos (tiempo excedido)", font=("Arial", 16), fg="red", bg="#f0f0f0").pack(pady=10)
+            tk.Label(nota_frame, text=f"Penalización aplicada: -{pen} puntos (tiempo excedido)", font=("Arial", 13), fg="#f44336", bg="#f0f0f0").pack(pady=5)
 
         # Separador
-        tk.Label(scrollable_frame, text="─" * 100, font=("Arial", 10), bg="#f0f0f0", fg="#003366").pack(pady=20)
+        tk.Label(main_frame, text="─" * 80, font=("Arial", 10), bg="#f0f0f0", fg="#4CAF50").pack(pady=10)
 
-        # Desglose detallado por operación
-        tk.Label(scrollable_frame, text="DETALLE DE RESULTADOS", font=("Arial", 24, "bold"), bg="#f0f0f0", fg="#003366").pack(pady=15)
+        # Sección tabla: DETALLE DE RESULTADOS
+        tk.Label(main_frame, text="DETALLE DE RESULTADOS", font=("Arial", 20, "bold"), bg="#f0f0f0", fg="#4CAF50").pack(pady=5)
 
         # Mapear nombres de operaciones
         nombres_operaciones = {
@@ -884,18 +895,18 @@ class AgilidadMentalApp:
                 resultados_por_operacion[op] = []
             resultados_por_operacion[op].append(r)
 
-        # Crear tabla de resultados
-        table_frame = tk.Frame(scrollable_frame, bg="#f0f0f0")
-        table_frame.pack(pady=20, padx=40)
+        # Crear tabla de resultados (más compacta)
+        table_frame = tk.Frame(main_frame, bg="#f0f0f0")
+        table_frame.pack(pady=10)
 
-        # Encabezados de la tabla
-        headers = ["Operación", "Hasta Tabla", "Correctas", "Incorrectas", "Total"]
-        col_widths = [20, 12, 12, 12, 10]
+        # Encabezados de la tabla (sin columna "Total")
+        headers = ["Operación", "Hasta Tabla", "Correctas", "Incorrectas"]
+        col_widths = [20, 14, 13, 13]
 
         for col, (header, width) in enumerate(zip(headers, col_widths)):
-            tk.Label(table_frame, text=header, font=("Arial", 14, "bold"),
-                    bg="#003366", fg="white", width=width,
-                    relief="solid", bd=1, padx=10, pady=8).grid(row=0, column=col, sticky="ew")
+            tk.Label(table_frame, text=header, font=("Arial", 12, "bold"),
+                    bg="#4CAF50", fg="white", width=width,
+                    relief="solid", bd=1, padx=8, pady=6).grid(row=0, column=col, sticky="ew")
 
         # Filas de datos
         row_num = 1
@@ -907,43 +918,41 @@ class AgilidadMentalApp:
                 # Calcular totales de la operación
                 total_correctas = sum(t["correctas"] for t in tablas)
                 total_incorrectas = sum(t["incorrectas"] for t in tablas)
-                total_preguntas = len(tablas) * 12
                 tabla_max = max(t["tabla"] for t in tablas)
 
                 # Color de fondo alternado
-                bg_color = "#e3f2fd" if row_num % 2 == 0 else "#f0f0f0"
+                bg_color = "#e8f5e9" if row_num % 2 == 0 else "#f0f0f0"
 
-                # Fila de la operación
-                data = [nombre_op, str(tabla_max), str(total_correctas), str(total_incorrectas), str(total_preguntas)]
+                # Fila de la operación (sin columna Total)
+                data = [nombre_op, str(tabla_max), str(total_correctas), str(total_incorrectas)]
                 for col, (value, width) in enumerate(zip(data, col_widths)):
-                    tk.Label(table_frame, text=value, font=("Arial", 12, "bold"),
+                    tk.Label(table_frame, text=value, font=("Arial", 11, "bold"),
                             bg=bg_color, fg="#333", width=width,
-                            relief="solid", bd=1, padx=10, pady=6).grid(row=row_num, column=col, sticky="ew")
+                            relief="solid", bd=1, padx=8, pady=4).grid(row=row_num, column=col, sticky="ew")
 
                 row_num += 1
 
-        # Fila de totales
+        # Fila de totales (sin columna Total)
         total_general_correctas = sum(r["correctas"] for r in self.resultados_operacion.values())
         total_general_incorrectas = sum(r["incorrectas"] for r in self.resultados_operacion.values())
-        total_general_preguntas = len(self.resultados_operacion) * 12
 
-        totales = ["TOTAL GENERAL", "", str(total_general_correctas), str(total_general_incorrectas), str(total_general_preguntas)]
+        totales = ["TOTAL GENERAL", "", str(total_general_correctas), str(total_general_incorrectas)]
         for col, (value, width) in enumerate(zip(totales, col_widths)):
-            tk.Label(table_frame, text=value, font=("Arial", 13, "bold"),
-                    bg="#fff3cd", fg="#333", width=width,
-                    relief="solid", bd=2, padx=10, pady=8).grid(row=row_num, column=col, sticky="ew")
+            tk.Label(table_frame, text=value, font=("Arial", 12, "bold"),
+                    bg="#c8e6c9", fg="#333", width=width,
+                    relief="solid", bd=2, padx=8, pady=6).grid(row=row_num, column=col, sticky="ew")
 
         # Separador final
-        tk.Label(scrollable_frame, text="─" * 100, font=("Arial", 10), bg="#f0f0f0", fg="#003366").pack(pady=30)
+        tk.Label(main_frame, text="─" * 80, font=("Arial", 10), bg="#f0f0f0", fg="#4CAF50").pack(pady=10)
 
         # Botones
-        buttons_frame = tk.Frame(scrollable_frame, bg="#f0f0f0")
-        buttons_frame.pack(pady=20)
+        buttons_frame = tk.Frame(main_frame, bg="#f0f0f0")
+        buttons_frame.pack(pady=10)
 
-        tk.Button(buttons_frame, text="IMPRIMIR RESULTADOS", font=("Arial", 16, "bold"), width=22, height=2,
+        tk.Button(buttons_frame, text="IMPRIMIR RESULTADOS", font=("Arial", 15, "bold"), width=22, height=2,
                   bg="#4CAF50", fg="white", command=self.imprimir_resultados).pack(side="left", padx=10)
 
-        tk.Button(buttons_frame, text="CERRAR PROGRAMA", font=("Arial", 16, "bold"), width=22, height=2,
+        tk.Button(buttons_frame, text="CERRAR PROGRAMA", font=("Arial", 15, "bold"), width=22, height=2,
                   bg="#f44336", fg="white", command=self.root.quit).pack(side="left", padx=10)
 
 
