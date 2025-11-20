@@ -523,7 +523,7 @@ class AgilidadMentalApp:
     def _crear_panel_cronometro(self, parent):
         """Crea el panel con el cronómetro y nombre del estudiante (columna 3)"""
         cronometro_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
-        cronometro_frame.grid(row=0, column=2, sticky="n", padx=(15, 0), pady=50)
+        cronometro_frame.grid(row=0, column=2, sticky="n", padx=(15, 0), pady=65)
 
         # Cronómetro - del alto de dos botones
         self.label_tiempo = tk.Label(
