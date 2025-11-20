@@ -368,9 +368,15 @@ class AgilidadMentalApp:
                 else:
                     # tabla como dividendo
                     a = tabla
-                    b = random.randint(2, min(tabla, 12))
-                    resp = a // b
-                    a = b * resp  # Ajustar para que sea división exacta
+                    # Asegurar que b sea válido incluso si tabla es 1
+                    if tabla == 1:
+                        b = 1  # Si tabla es 1, el divisor solo puede ser 1
+                        resp = 1
+                        a = b * resp
+                    else:
+                        b = random.randint(2, tabla)
+                        resp = a // b
+                        a = b * resp  # Ajustar para que sea división exacta
                 texto = f"{a} ÷ {b} ="
 
             elif operacion == "potencia":
