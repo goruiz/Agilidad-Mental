@@ -34,7 +34,7 @@ class Config:
     COLOR_BACKGROUND = "#f0f0f0"
     COLOR_WARNING = "#FF9800"
     COLOR_INFO = "#2196F3"
-    COLOR_DANGER = "#f44336"
+    COLOR_DANGER = "#b81206"
     COLOR_SUCCESS = "#4CAF50"
     COLOR_TIMER_BG = "#000000"
     COLOR_TIMER_NORMAL = "#ffffff"
@@ -91,7 +91,7 @@ class AgilidadMentalApp:
 
     def _configurar_ventana(self):
         """Configura la ventana principal de la aplicación"""
-        self.root.title("Programa de Agilidad Mental")
+        self.root.title("ACADEMIA NAVAL CAP. LEONARDOABAD GUERRA")
         self.root.geometry(f"{Config.WINDOW_WIDTH}x{Config.WINDOW_HEIGHT}")
         self.root.configure(bg=Config.COLOR_BACKGROUND)
 
@@ -228,8 +228,17 @@ class AgilidadMentalApp:
         """Pantalla para ingresar datos del estudiante"""
         self.limpiar_pantalla()
 
-        frame = tk.Frame(self.root, bg=Config.COLOR_BACKGROUND)
-        frame.pack(expand=True, fill="both", padx=120, pady=60)
+        main_frame = tk.Frame(self.root, bg=Config.COLOR_BACKGROUND)
+        main_frame.pack(fill="both", expand=True)
+
+        # Configurar grid de 2 columnas
+        main_frame.grid_columnconfigure(0, weight=3)
+        main_frame.grid_columnconfigure(1, weight=1)
+        main_frame.grid_rowconfigure(0, weight=1)
+
+        # Panel izquierdo (datos del estudiante)
+        frame = tk.Frame(main_frame, bg=Config.COLOR_BACKGROUND)
+        frame.grid(row=0, column=0, sticky="nsew", padx=(120, 40), pady=60)
 
         tk.Label(
             frame,
@@ -237,7 +246,7 @@ class AgilidadMentalApp:
             font=("Arial", 28, "bold"),
             bg=Config.COLOR_BACKGROUND,
             fg=Config.COLOR_PRIMARY
-        ).grid(row=0, column=0, columnspan=2, pady=30)
+        ).grid(row=0, column=0, columnspan=2, pady=(0, 30))
 
         # Campo Nombre
         tk.Label(
@@ -304,6 +313,31 @@ class AgilidadMentalApp:
             command=self.validar_datos
         ).grid(row=4, column=0, columnspan=2, pady=50)
 
+        # Panel derecho (logo) - alineado a la altura de los campos
+        frame_logo = tk.Frame(main_frame, bg=Config.COLOR_BACKGROUND)
+        frame_logo.grid(row=0, column=1, sticky="nsew", padx=(20, 80), pady=60)
+
+        # Contenedor para el logo alineado con los campos
+        logo_container = tk.Frame(frame_logo, bg=Config.COLOR_BACKGROUND)
+        logo_container.pack(pady=(80, 0))  # Alineado con el inicio de los campos
+
+        if PIL_AVAILABLE and os.path.exists("logo.png"):
+            img = Image.open("logo.png")
+            img = img.resize((250, 250), Image.Resampling.LANCZOS)
+            logo = ImageTk.PhotoImage(img)
+            label_logo = tk.Label(logo_container, image=logo, bg=Config.COLOR_BACKGROUND)
+            label_logo.image = logo
+            label_logo.pack()
+        else:
+            tk.Label(
+                logo_container,
+                text="LOGO\nINSTITUCIÓN",
+                font=("Arial", 24, "bold"),
+                bg=Config.COLOR_BACKGROUND,
+                fg="#333",
+                justify="center"
+            ).pack()
+
     def mostrar_pantalla_ejercicios(self):
         """Pantalla principal con los ejercicios de la operación actual"""
         self.limpiar_pantalla()
@@ -347,19 +381,7 @@ class AgilidadMentalApp:
             font=("Arial", 24, "bold"),
             bg=Config.COLOR_BACKGROUND,
             fg=Config.COLOR_PRIMARY
-        ).pack(anchor="center", pady=(0, 10))
-
-        # Cronómetro
-        self.label_tiempo = tk.Label(
-            left_frame,
-            text="Tiempo: 00:00",
-            font=("Arial", 20, "bold"),
-            bg=Config.COLOR_TIMER_BG,
-            fg=Config.COLOR_TIMER_NORMAL,
-            padx=20,
-            pady=10
-        )
-        self.label_tiempo.pack(pady=(0, 15))
+        ).pack(anchor="center", pady=(0, 25))
 
         # Ejercicios
         self.entries = {}
@@ -450,6 +472,34 @@ class AgilidadMentalApp:
             "relief": "raised"
         }
 
+        # Cronómetro - del alto de dos botones
+        self.label_tiempo = tk.Label(
+            right_frame,
+            text="Tiempo: 00:00",
+            font=("Arial", 18, "bold"),
+            bg=Config.COLOR_TIMER_BG,
+            fg=Config.COLOR_TIMER_NORMAL,
+            width=20,
+            height=5,
+            relief="solid",
+            bd=3
+        )
+        self.label_tiempo.pack(pady=(0, 15))
+
+        # Recuadro con nombre del estudiante
+        label_nombre = tk.Label(
+            right_frame,
+            text=self.nombre,
+            font=("Arial", 14, "bold"),
+            bg="white",
+            fg="#333",
+            width=20,
+            height=2,
+            relief="solid",
+            bd=2
+        )
+        label_nombre.pack(pady=(0, 30))
+
         # Botón INICIAR
         self.boton_iniciar = tk.Button(
             right_frame,
@@ -465,7 +515,7 @@ class AgilidadMentalApp:
         self.boton_finalizar = tk.Button(
             right_frame,
             text="FINALIZAR",
-            bg=Config.COLOR_WARNING,
+            bg=Config.COLOR_PRIMARY,
             fg="white",
             command=self.finalizar_operacion,
             **btn_style
@@ -476,7 +526,7 @@ class AgilidadMentalApp:
         tk.Button(
             right_frame,
             text="RESULTADOS",
-            bg=Config.COLOR_INFO,
+            bg=Config.COLOR_PRIMARY,
             fg="white",
             command=self.mostrar_resultados_operacion,
             **btn_style
@@ -505,7 +555,7 @@ class AgilidadMentalApp:
         """Retorna el texto apropiado para el botón SIGUIENTE"""
         if self.tabla_actual < self.tabla_max:
             return "SIGUIENTE TABLA →"
-        return "SIGUIENTE OPERACIÓN →"
+        return "SIGUIENTE\nOPERACIÓN →"
 
     def mostrar_resultados_finales(self):
         """Pantalla final con todos los resultados del test"""
@@ -1033,15 +1083,24 @@ class AgilidadMentalApp:
 
     def _generar_raiz(self, tabla):
         """Genera un ejercicio de radicación"""
-        # Generar un número aleatorio que tenga raíz cuadrada exacta
-        # Usar la tabla como base y multiplicar por diferentes valores
-        if random.choice([True, False]):
-            # Forma 1: tabla × multiplicador (más variedad)
-            multiplicador = random.randint(1, 10)
+        # Generar diferentes tipos de ejercicios para mayor variedad
+        tipo = random.randint(1, 4)
+
+        if tipo == 1:
+            # Forma 1: tabla × multiplicador pequeño
+            multiplicador = random.randint(1, 5)
             base = tabla * multiplicador
+        elif tipo == 2:
+            # Forma 2: tabla × multiplicador grande
+            multiplicador = random.randint(6, 12)
+            base = tabla * multiplicador
+        elif tipo == 3:
+            # Forma 3: número aleatorio en rango amplio
+            base = random.randint(1, tabla * 15)
         else:
-            # Forma 2: número aleatorio entre 1 y (tabla × 10)
-            base = random.randint(1, tabla * 10)
+            # Forma 4: cuadrados perfectos comunes + offset de tabla
+            cuadrados_base = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 25, 30]
+            base = random.choice(cuadrados_base) + (tabla % 5)
 
         num = base ** 2
         resp = base
