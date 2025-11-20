@@ -24,8 +24,9 @@ class AgilidadMentalApp:
         self.nombre = ""
         self.curso = ""
         self.fecha = datetime.now().strftime("%d/%m/%Y")
-        self.tabla_max = 10
+        self.tabla_max = 10  # Límite actual de tabla para la operación en curso
         self.tabla_actual = 1  # Tabla actual (1, 2, 3, ...)
+        self.limites_tablas = {}  # Diccionario para almacenar el límite de cada operación
         self.tiempo_inicio = None
         self.tiempo_total = 0
         self.corriendo = False
@@ -138,12 +139,8 @@ class AgilidadMentalApp:
         self.entry_fecha.insert(0, self.fecha)
         self.entry_fecha.grid(row=3, column=1, pady=12)
 
-        tk.Label(frame, text="Hasta qué tabla (suma):", font=("Arial", 16), bg="#f0f0f0").grid(row=4, column=0, sticky="w", pady=12)
-        self.spin_tabla = tk.Spinbox(frame, from_=2, to=12, font=("Arial", 16), width=10)
-        self.spin_tabla.grid(row=4, column=1, sticky="w", pady=12)
-
         tk.Button(frame, text="COMENZAR TEST", font=("Arial", 18, "bold"), width=25, height=2,
-                  bg="#2196F3", fg="white", command=self.validar_datos).grid(row=5, column=0, columnspan=2, pady=50)
+                  bg="#2196F3", fg="white", command=self.validar_datos).grid(row=4, column=0, columnspan=2, pady=50)
 
     def validar_datos(self):
         nombre = self.entry_nombre.get().strip()
@@ -154,11 +151,74 @@ class AgilidadMentalApp:
         self.nombre = nombre
         self.curso = curso
         self.fecha = self.entry_fecha.get()
-        self.tabla_max = int(self.spin_tabla.get())
         self.resultados_operacion = {}
         self.operacion_actual = ""
         self.tabla_actual = 1  # Iniciar desde la tabla 1
-        self.mostrar_pantalla_ejercicios()
+        self.limites_tablas = {}  # Resetear límites
+        # Solicitar el límite de tabla para la primera operación
+        self.solicitar_limite_tabla_operacion()
+
+    def solicitar_limite_tabla_operacion(self):
+        """Solicita al usuario el límite de tabla para la operación actual"""
+        # Si no hay operación actual, asignar la primera
+        if not self.operacion_actual:
+            self.operacion_actual = self.operaciones_nivel[0]
+
+        # Mapear nombres de operaciones
+        nombres_operaciones = {
+            "suma": "Suma",
+            "resta": "Resta",
+            "multiplicación": "Multiplicación",
+            "división": "División",
+            "potencia": "Potenciación",
+            "raíz": "Radicación"
+        }
+        nombre_op = nombres_operaciones.get(self.operacion_actual, self.operacion_actual)
+
+        # Crear ventana de diálogo personalizada
+        dialog = tk.Toplevel(self.root)
+        dialog.title(f"Configurar {nombre_op}")
+        dialog.geometry("450x200")
+        dialog.configure(bg="#f0f0f0")
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        # Centrar el diálogo
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() // 2) - (450 // 2)
+        y = (dialog.winfo_screenheight() // 2) - (200 // 2)
+        dialog.geometry(f"+{x}+{y}")
+
+        tk.Label(dialog, text=f"Ingrese hasta qué tabla desea\nrealizar en la {nombre_op}:",
+                font=("Arial", 14, "bold"), bg="#f0f0f0", fg="#003366").pack(pady=20)
+
+        spin_frame = tk.Frame(dialog, bg="#f0f0f0")
+        spin_frame.pack(pady=10)
+
+        spin = tk.Spinbox(spin_frame, from_=2, to=12, font=("Arial", 16), width=10)
+        spin.pack()
+
+        resultado = {"confirmado": False}
+
+        def confirmar():
+            resultado["confirmado"] = True
+            resultado["valor"] = int(spin.get())
+            dialog.destroy()
+
+        tk.Button(dialog, text="ACEPTAR", font=("Arial", 14, "bold"), width=15,
+                 bg="#4CAF50", fg="white", command=confirmar).pack(pady=20)
+
+        # Esperar a que se cierre el diálogo
+        self.root.wait_window(dialog)
+
+        if resultado["confirmado"]:
+            self.limites_tablas[self.operacion_actual] = resultado["valor"]
+            self.tabla_max = resultado["valor"]
+            self.tabla_actual = 1
+            self.mostrar_pantalla_ejercicios()
+        else:
+            # Si cancela, volver a la pantalla de datos
+            self.mostrar_pantalla_datos()
 
     def generar_ejercicios(self, operacion):
         """Genera 12 ejercicios usando la tabla actual (self.tabla_actual)"""
@@ -320,7 +380,18 @@ class AgilidadMentalApp:
         left_frame = tk.Frame(main_frame, bg="#f0f0f0")
         left_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 20))
 
-        tk.Label(left_frame, text=f"{self.operacion_actual.upper()} - TABLA DEL {self.tabla_actual}",
+        # Mapear nombres de operaciones
+        nombres_operaciones = {
+            "suma": "Suma",
+            "resta": "Resta",
+            "multiplicación": "Multiplicación",
+            "división": "División",
+            "potencia": "Potenciación",
+            "raíz": "Radicación"
+        }
+        nombre_op = nombres_operaciones.get(self.operacion_actual, self.operacion_actual.upper())
+
+        tk.Label(left_frame, text=f"Operaciones de {nombre_op}",
                  font=("Arial", 24, "bold"), bg="#f0f0f0", fg="#003366").pack(anchor="center", pady=(0, 10))
 
         self.label_tiempo = tk.Label(left_frame, text="Tiempo: 00:00", font=("Arial", 20, "bold"),
@@ -356,8 +427,20 @@ class AgilidadMentalApp:
 
         tk.Button(right_frame, text="RESULTADOS", bg="#2196F3", fg="white",
                   command=self.mostrar_resultados_operacion, **btn_style).pack(pady=15)
-        tk.Button(right_frame, text="SIGUIENTE →", bg="#9C27B0", fg="white",
-                  command=self.siguiente_operacion, **btn_style).pack(pady=15)
+
+        # Solo mostrar el botón SIGUIENTE si no es la última tabla de la operación actual
+        # O si no es la última operación del nivel
+        idx_actual = self.operaciones_nivel.index(self.operacion_actual)
+        es_ultima_operacion = (idx_actual == len(self.operaciones_nivel) - 1)
+        es_ultima_tabla = (self.tabla_actual == self.tabla_max)
+
+        # Mostrar SIGUIENTE solo si:
+        # - No es la última tabla de la operación actual, O
+        # - Es la última tabla pero no es la última operación
+        if not (es_ultima_tabla and es_ultima_operacion):
+            boton_texto = "SIGUIENTE TABLA →" if self.tabla_actual < self.tabla_max else "SIGUIENTE OPERACIÓN →"
+            tk.Button(right_frame, text=boton_texto, bg="#9C27B0", fg="white",
+                     command=self.siguiente_operacion, **btn_style).pack(pady=15)
 
     def finalizar_operacion(self):
         # Verificar si ya fue finalizado
@@ -403,8 +486,31 @@ class AgilidadMentalApp:
             "tiempo": self.tiempo_total
         }
 
+        # Mapear nombres de operaciones
+        nombres_operaciones = {
+            "suma": "Suma",
+            "resta": "Resta",
+            "multiplicación": "Multiplicación",
+            "división": "División",
+            "potencia": "Potenciación",
+            "raíz": "Radicación"
+        }
+        nombre_op = nombres_operaciones.get(self.operacion_actual, self.operacion_actual)
+
         messagebox.showinfo("¡Operación Completada!",
-                            f"{self.operacion_actual.upper()} - TABLA DEL {self.tabla_actual}\n\nAciertos: {correctas}/12\nTiempo usado: {int(self.tiempo_total//60):02d}:{int(self.tiempo_total%60):02d}")
+                            f"{nombre_op} - TABLA DEL {self.tabla_actual}\n\nAciertos: {correctas}/12\nTiempo usado: {int(self.tiempo_total//60):02d}:{int(self.tiempo_total%60):02d}")
+
+        # Verificar si es la última tabla de la última operación
+        idx_actual = self.operaciones_nivel.index(self.operacion_actual)
+        es_ultima_operacion = (idx_actual == len(self.operaciones_nivel) - 1)
+        es_ultima_tabla = (self.tabla_actual == self.tabla_max)
+
+        if es_ultima_tabla and es_ultima_operacion:
+            # Mostrar resultados finales automáticamente
+            self.mostrar_resultados_finales()
+        elif es_ultima_tabla:
+            # Es la última tabla de esta operación pero no la última operación
+            self.mostrar_resumen_operacion_completa()
 
     def siguiente_operacion(self):
         # Verificar si la tabla actual fue finalizada
@@ -419,10 +525,60 @@ class AgilidadMentalApp:
             self.tiempo_total = 0
             self.mostrar_pantalla_ejercicios()
         else:
-            # Ya completó todas las tablas de esta operación, pasar a la siguiente operación
-            self.tabla_actual = 1  # Reiniciar tabla para la siguiente operación
+            # Ya completó todas las tablas de esta operación
+            # Mostrar resultados de la operación completa antes de pasar a la siguiente
+            self.mostrar_resumen_operacion_completa()
+
+    def mostrar_resumen_operacion_completa(self):
+        """Muestra el resumen de todas las tablas de la operación actual"""
+        # Calcular totales de la operación actual
+        correctas_total = 0
+        tiempo_total_op = 0
+        num_tablas = 0
+
+        for clave, r in self.resultados_operacion.items():
+            if r["operacion"] == self.operacion_actual:
+                correctas_total += r["correctas"]
+                tiempo_total_op += r["tiempo"]
+                num_tablas += 1
+
+        total_preguntas = num_tablas * 12
+
+        # Mapear nombres de operaciones
+        nombres_operaciones = {
+            "suma": "Suma",
+            "resta": "Resta",
+            "multiplicación": "Multiplicación",
+            "división": "División",
+            "potencia": "Potenciación",
+            "raíz": "Radicación"
+        }
+        nombre_op = nombres_operaciones.get(self.operacion_actual, self.operacion_actual)
+
+        mensaje = f"RESUMEN DE {nombre_op.upper()}\n\n"
+        mensaje += f"Total de aciertos: {correctas_total}/{total_preguntas}\n"
+        mensaje += f"Tiempo total: {int(tiempo_total_op//60):02d}:{int(tiempo_total_op%60):02d}\n\n"
+
+        # Verificar si hay más operaciones
+        idx_actual = self.operaciones_nivel.index(self.operacion_actual)
+        if idx_actual + 1 < len(self.operaciones_nivel):
+            # Hay más operaciones
+            siguiente_op = self.operaciones_nivel[idx_actual + 1]
+            nombre_siguiente = nombres_operaciones.get(siguiente_op, siguiente_op)
+            mensaje += f"Presione ACEPTAR para continuar con {nombre_siguiente}"
+            messagebox.showinfo("Operación Completada", mensaje)
+
+            # Pasar a la siguiente operación
+            self.operacion_actual = siguiente_op
+            self.tabla_actual = 1
             self.tiempo_total = 0
-            self.mostrar_pantalla_ejercicios()
+            # Solicitar límite de tabla para la siguiente operación
+            self.solicitar_limite_tabla_operacion()
+        else:
+            # No hay más operaciones, mostrar resultados finales
+            mensaje += "¡Ha completado todas las operaciones!"
+            messagebox.showinfo("Test Completado", mensaje)
+            self.mostrar_resultados_finales()
 
     def mostrar_resultados_operacion(self):
         if not self.resultados_operacion:
