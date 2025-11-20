@@ -241,24 +241,24 @@ class AgilidadMentalApp:
         boton_volver = tk.Button(
             main_frame,
             text="←",
-            font=("Arial", 20),
+            font=("Arial", 28),
             bg=Config.COLOR_BACKGROUND,
             fg="#999",
             bd=0,
             cursor="hand2",
             command=self.mostrar_pantalla_inicio,
             relief="flat",
-            padx=5,
-            pady=2
+            padx=8,
+            pady=4
         )
         boton_volver.place(x=15, y=15)
 
         # Efecto hover para el botón de volver
         def on_enter(e):
-            boton_volver.config(fg=Config.COLOR_PRIMARY, font=("Arial", 22))
+            boton_volver.config(fg=Config.COLOR_PRIMARY, font=("Arial", 32))
 
         def on_leave(e):
-            boton_volver.config(fg="#999", font=("Arial", 20))
+            boton_volver.config(fg="#999", font=("Arial", 28))
 
         boton_volver.bind("<Enter>", on_enter)
         boton_volver.bind("<Leave>", on_leave)
@@ -520,13 +520,14 @@ class AgilidadMentalApp:
         )
         self.boton_iniciar.pack(pady=15)
 
-        # Botón FINALIZAR
+        # Botón FINALIZAR (bloqueado inicialmente)
         self.boton_finalizar = tk.Button(
             botones_frame,
             text="FINALIZAR",
-            bg=Config.COLOR_PRIMARY,
-            fg="white",
+            bg="#cccccc",
+            fg="#666666",
             command=self.finalizar_operacion,
+            state="disabled",
             **btn_style
         )
         self.boton_finalizar.pack(pady=15)
@@ -584,7 +585,21 @@ class AgilidadMentalApp:
             relief="solid",
             bd=2
         )
-        label_nombre.pack(pady=(0, 15))
+        label_nombre.pack(pady=(0, 10))
+
+        # Recuadro con curso del estudiante
+        label_curso = tk.Label(
+            cronometro_frame,
+            text=self.curso,
+            font=("Arial", 12, "bold"),
+            bg="white",
+            fg="#555",
+            width=20,
+            height=2,
+            relief="solid",
+            bd=2
+        )
+        label_curso.pack(pady=(0, 15))
 
     def _debe_mostrar_boton_siguiente(self):
         """Determina si debe mostrarse el botón SIGUIENTE"""
@@ -1208,6 +1223,14 @@ class AgilidadMentalApp:
 
             for entry in self.entries.values():
                 entry.config(state="normal")
+
+            # Habilitar el botón FINALIZAR con estilo activo
+            if self.boton_finalizar:
+                self.boton_finalizar.config(
+                    state="normal",
+                    bg=Config.COLOR_PRIMARY,
+                    fg="white"
+                )
 
             self.actualizar_cronometro()
 
