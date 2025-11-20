@@ -1017,9 +1017,18 @@ class AgilidadMentalApp:
 
     def _generar_raiz(self, tabla):
         """Genera un ejercicio de radicación"""
-        multiplicador = random.randint(1, 5)
-        num = (tabla * multiplicador) ** 2
-        resp = tabla * multiplicador
+        # Generar un número aleatorio que tenga raíz cuadrada exacta
+        # Usar la tabla como base y multiplicar por diferentes valores
+        if random.choice([True, False]):
+            # Forma 1: tabla × multiplicador (más variedad)
+            multiplicador = random.randint(1, 10)
+            base = tabla * multiplicador
+        else:
+            # Forma 2: número aleatorio entre 1 y (tabla × 10)
+            base = random.randint(1, tabla * 10)
+
+        num = base ** 2
+        resp = base
 
         return {
             "texto": f"√{num} =",
