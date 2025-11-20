@@ -356,27 +356,31 @@ class AgilidadMentalApp:
 
         self.ejercicios = self.generar_ejercicios(self.operacion_actual)
 
-        # Frame principal
+        # Frame principal con 3 columnas
         main_frame = tk.Frame(self.root, bg=Config.COLOR_BACKGROUND)
         main_frame.pack(fill="both", expand=True, padx=20, pady=10)
-        main_frame.grid_columnconfigure(0, weight=3)
-        main_frame.grid_columnconfigure(1, weight=1)
+        main_frame.grid_columnconfigure(0, weight=2)  # Ejercicios
+        main_frame.grid_columnconfigure(1, weight=1)  # Botones
+        main_frame.grid_columnconfigure(2, weight=1)  # Cronómetro/Nombre
 
-        # Panel izquierdo (ejercicios)
+        # Columna 1: Ejercicios
         self._crear_panel_ejercicios(main_frame)
 
-        # Panel derecho (botones)
+        # Columna 2: Botones de acción
         self._crear_panel_botones(main_frame)
 
+        # Columna 3: Cronómetro y nombre
+        self._crear_panel_cronometro(main_frame)
+
     def _crear_panel_ejercicios(self, parent):
-        """Crea el panel izquierdo con los ejercicios"""
-        left_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
-        left_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 20))
+        """Crea el panel con los ejercicios (columna 1)"""
+        ejercicios_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
+        ejercicios_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 15))
 
         nombre_op = self.obtener_nombre_operacion(self.operacion_actual)
 
         tk.Label(
-            left_frame,
+            ejercicios_frame,
             text=f"Operaciones de {nombre_op}",
             font=("Arial", 24, "bold"),
             bg=Config.COLOR_BACKGROUND,
@@ -386,7 +390,7 @@ class AgilidadMentalApp:
         # Ejercicios
         self.entries = {}
         for i, ej in enumerate(self.ejercicios):
-            self._crear_ejercicio(left_frame, ej)
+            self._crear_ejercicio(ejercicios_frame, ej)
 
     def _crear_ejercicio(self, parent, ejercicio):
         """Crea una fila con un ejercicio individual"""
@@ -460,9 +464,9 @@ class AgilidadMentalApp:
         ).pack(side="left")
 
     def _crear_panel_botones(self, parent):
-        """Crea el panel derecho con los botones de control"""
-        right_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
-        right_frame.grid(row=0, column=1, sticky="n", pady=50)
+        """Crea el panel con los botones de acción (columna 2)"""
+        botones_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
+        botones_frame.grid(row=0, column=1, sticky="n", padx=15, pady=50)
 
         btn_style = {
             "font": ("Arial", 15, "bold"),
@@ -472,9 +476,58 @@ class AgilidadMentalApp:
             "relief": "raised"
         }
 
+        # Botón INICIAR
+        self.boton_iniciar = tk.Button(
+            botones_frame,
+            text="INICIAR",
+            bg=Config.COLOR_SUCCESS,
+            fg="white",
+            command=self.iniciar_cronometro,
+            **btn_style
+        )
+        self.boton_iniciar.pack(pady=15)
+
+        # Botón FINALIZAR
+        self.boton_finalizar = tk.Button(
+            botones_frame,
+            text="FINALIZAR",
+            bg=Config.COLOR_PRIMARY,
+            fg="white",
+            command=self.finalizar_operacion,
+            **btn_style
+        )
+        self.boton_finalizar.pack(pady=15)
+
+        # Botón RESULTADOS
+        tk.Button(
+            botones_frame,
+            text="RESULTADOS",
+            bg=Config.COLOR_PRIMARY,
+            fg="white",
+            command=self.mostrar_resultados_operacion,
+            **btn_style
+        ).pack(pady=15)
+
+        # Botón SIGUIENTE (condicional)
+        if self._debe_mostrar_boton_siguiente():
+            boton_texto = self._obtener_texto_boton_siguiente()
+            tk.Button(
+                botones_frame,
+                text=boton_texto,
+                bg=Config.COLOR_PRIMARY,
+                fg="white",
+                command=self.siguiente_operacion,
+                **btn_style
+            ).pack(pady=15)
+
+    def _crear_panel_cronometro(self, parent):
+        """Crea el panel con el cronómetro y nombre del estudiante (columna 3)"""
+        cronometro_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
+        cronometro_frame.grid(row=0, column=2, sticky="n", padx=(15, 0), pady=50)
+
         # Cronómetro - del alto de dos botones
         self.label_tiempo = tk.Label(
-            right_frame,
+            cronometro_frame,
             text="Tiempo: 00:00",
             font=("Arial", 18, "bold"),
             bg=Config.COLOR_TIMER_BG,
@@ -488,7 +541,7 @@ class AgilidadMentalApp:
 
         # Recuadro con nombre del estudiante
         label_nombre = tk.Label(
-            right_frame,
+            cronometro_frame,
             text=self.nombre,
             font=("Arial", 14, "bold"),
             bg="white",
@@ -498,51 +551,7 @@ class AgilidadMentalApp:
             relief="solid",
             bd=2
         )
-        label_nombre.pack(pady=(0, 30))
-
-        # Botón INICIAR
-        self.boton_iniciar = tk.Button(
-            right_frame,
-            text="INICIAR",
-            bg=Config.COLOR_SUCCESS,
-            fg="white",
-            command=self.iniciar_cronometro,
-            **btn_style
-        )
-        self.boton_iniciar.pack(pady=15)
-
-        # Botón FINALIZAR
-        self.boton_finalizar = tk.Button(
-            right_frame,
-            text="FINALIZAR",
-            bg=Config.COLOR_PRIMARY,
-            fg="white",
-            command=self.finalizar_operacion,
-            **btn_style
-        )
-        self.boton_finalizar.pack(pady=15)
-
-        # Botón RESULTADOS
-        tk.Button(
-            right_frame,
-            text="RESULTADOS",
-            bg=Config.COLOR_PRIMARY,
-            fg="white",
-            command=self.mostrar_resultados_operacion,
-            **btn_style
-        ).pack(pady=15)
-
-        # Botón SIGUIENTE (condicional)
-        if self._debe_mostrar_boton_siguiente():
-            boton_texto = self._obtener_texto_boton_siguiente()
-            tk.Button(
-                right_frame,
-                text=boton_texto,
-                bg=Config.COLOR_PRIMARY,
-                fg="white",
-                command=self.siguiente_operacion,
-                **btn_style
-            ).pack(pady=15)
+        label_nombre.pack(pady=(0, 15))
 
     def _debe_mostrar_boton_siguiente(self):
         """Determina si debe mostrarse el botón SIGUIENTE"""
