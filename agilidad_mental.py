@@ -11,6 +11,12 @@ try:
 except ImportError:
     PIL_AVAILABLE = False
 
+try:
+    from tkcalendar import DateEntry
+    TKCALENDAR_AVAILABLE = True
+except ImportError:
+    TKCALENDAR_AVAILABLE = False
+
 
 class AgilidadMentalApp:
     def __init__(self, root):
@@ -145,8 +151,17 @@ class AgilidadMentalApp:
         self.combo_curso.grid(row=2, column=1, pady=12)
 
         tk.Label(frame, text="Fecha:", font=("Arial", 16), bg="#f0f0f0").grid(row=3, column=0, sticky="w", pady=12)
-        self.entry_fecha = tk.Entry(frame, font=("Arial", 16), width=35)
-        self.entry_fecha.insert(0, self.fecha)
+
+        # Si tkcalendar está disponible, usar DateEntry, sino usar Entry normal
+        if TKCALENDAR_AVAILABLE:
+            self.entry_fecha = DateEntry(frame, font=("Arial", 16), width=33,
+                                        borderwidth=2, date_pattern='dd/mm/yyyy',
+                                        locale='es_ES', showweeknumbers=False)
+            self.entry_fecha.set_date(datetime.now())
+        else:
+            self.entry_fecha = tk.Entry(frame, font=("Arial", 16), width=35)
+            self.entry_fecha.insert(0, self.fecha)
+
         self.entry_fecha.grid(row=3, column=1, pady=12)
 
         tk.Button(frame, text="COMENZAR TEST", font=("Arial", 18, "bold"), width=25, height=2,
@@ -160,7 +175,13 @@ class AgilidadMentalApp:
             return
         self.nombre = nombre
         self.curso = curso
-        self.fecha = self.entry_fecha.get()
+
+        # Obtener fecha dependiendo del tipo de widget
+        if TKCALENDAR_AVAILABLE:
+            self.fecha = self.entry_fecha.get_date().strftime("%d/%m/%Y")
+        else:
+            self.fecha = self.entry_fecha.get()
+
         self.resultados_operacion = {}
         self.operacion_actual = ""
         self.tabla_actual = 1  # Iniciar desde la tabla 1
@@ -187,26 +208,37 @@ class AgilidadMentalApp:
 
         # Crear ventana de diálogo personalizada
         dialog = tk.Toplevel(self.root)
-        dialog.title(f"Configurar {nombre_op}")
-        dialog.geometry("450x200")
+        dialog.title(f"{nombre_op}")
         dialog.configure(bg="#f0f0f0")
         dialog.transient(self.root)
         dialog.grab_set()
+        dialog.resizable(False, False)
 
-        # Centrar el diálogo
-        dialog.update_idletasks()
-        x = (dialog.winfo_screenwidth() // 2) - (450 // 2)
-        y = (dialog.winfo_screenheight() // 2) - (200 // 2)
-        dialog.geometry(f"+{x}+{y}")
+        # Frame principal con padding
+        main_frame = tk.Frame(dialog, bg="#f0f0f0")
+        main_frame.pack(expand=True, fill="both", padx=40, pady=30)
 
-        tk.Label(dialog, text=f"Ingrese hasta qué tabla desea\nrealizar en la {nombre_op}:",
-                font=("Arial", 14, "bold"), bg="#f0f0f0", fg="#4CAF50").pack(pady=20)
+        # Título con ícono
+        title_frame = tk.Frame(main_frame, bg="#f0f0f0")
+        title_frame.pack(pady=(0, 25))
 
-        spin_frame = tk.Frame(dialog, bg="#f0f0f0")
-        spin_frame.pack(pady=10)
+        tk.Label(title_frame, text="📊", font=("Arial", 24), bg="#f0f0f0").pack()
+        tk.Label(title_frame, text=f"{nombre_op}",
+                font=("Arial", 18, "bold"), bg="#f0f0f0", fg="#333").pack(pady=(5, 0))
 
-        spin = tk.Spinbox(spin_frame, from_=2, to=12, font=("Arial", 16), width=10)
-        spin.pack()
+        # Instrucción
+        tk.Label(main_frame, text=f"¿Hasta qué tabla quieres practicar?",
+                font=("Arial", 13), bg="#f0f0f0", fg="#555").pack(pady=(0, 20))
+
+        # Frame para el spinbox con estilo
+        spin_container = tk.Frame(main_frame, bg="#ffffff", bd=2, relief="solid")
+        spin_container.pack(pady=10)
+
+        spin = tk.Spinbox(spin_container, from_=1, to=12, font=("Arial", 20, "bold"),
+                         width=8, justify="center", bd=0, relief="flat", fg="#333")
+        spin.delete(0, "end")
+        spin.insert(0, "1")  # Valor por defecto 1
+        spin.pack(padx=10, pady=10)
 
         resultado = {"confirmado": False}
 
@@ -215,8 +247,57 @@ class AgilidadMentalApp:
             resultado["valor"] = int(spin.get())
             dialog.destroy()
 
-        tk.Button(dialog, text="ACEPTAR", font=("Arial", 14, "bold"), width=15,
-                 bg="#4CAF50", fg="white", command=confirmar).pack(pady=20)
+        def cancelar():
+            resultado["confirmado"] = False
+            dialog.destroy()
+
+        def on_enter_aceptar(e):
+            btn_aceptar.config(bg="#45a049")
+
+        def on_leave_aceptar(e):
+            btn_aceptar.config(bg="#4CAF50")
+
+        def on_enter_cancelar(e):
+            btn_cancelar.config(bg="#d32f2f")
+
+        def on_leave_cancelar(e):
+            btn_cancelar.config(bg="#f44336")
+
+        # Frame para botones
+        buttons_frame = tk.Frame(main_frame, bg="#f0f0f0")
+        buttons_frame.pack(pady=20)
+
+        # Botón ACEPTAR con efecto hover
+        btn_aceptar = tk.Button(buttons_frame, text="ACEPTAR", font=("Arial", 14, "bold"),
+                               width=12, height=2, bg="#4CAF50", fg="white",
+                               bd=0, relief="flat", cursor="hand2",
+                               activebackground="#45a049", activeforeground="white",
+                               command=confirmar)
+        btn_aceptar.pack(side="left", padx=10)
+        btn_aceptar.bind("<Enter>", on_enter_aceptar)
+        btn_aceptar.bind("<Leave>", on_leave_aceptar)
+
+        # Botón CANCELAR con efecto hover
+        btn_cancelar = tk.Button(buttons_frame, text="CANCELAR", font=("Arial", 14, "bold"),
+                                width=12, height=2, bg="#f44336", fg="white",
+                                bd=0, relief="flat", cursor="hand2",
+                                activebackground="#d32f2f", activeforeground="white",
+                                command=cancelar)
+        btn_cancelar.pack(side="left", padx=10)
+        btn_cancelar.bind("<Enter>", on_enter_cancelar)
+        btn_cancelar.bind("<Leave>", on_leave_cancelar)
+
+        # Permitir confirmar con Enter y cancelar con Escape
+        dialog.bind('<Return>', lambda e: confirmar())
+        dialog.bind('<Escape>', lambda e: cancelar())
+
+        # Centrar el diálogo DESPUÉS de crear todos los widgets
+        dialog.update_idletasks()
+        width = dialog.winfo_width()
+        height = dialog.winfo_height()
+        x = (dialog.winfo_screenwidth() // 2) - (width // 2)
+        y = (dialog.winfo_screenheight() // 2) - (height // 2)
+        dialog.geometry(f"+{x}+{y}")
 
         # Esperar a que se cierre el diálogo
         self.root.wait_window(dialog)
