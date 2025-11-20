@@ -149,6 +149,11 @@ class AgilidadMentalApp:
         """Retorna el nombre legible de una operación"""
         return Config.NOMBRES_OPERACIONES.get(operacion, operacion.upper())
 
+    def obtener_tabla_minima(self, operacion):
+        """Retorna la tabla mínima para una operación específica"""
+        # Multiplicación, división, potenciación y radicación empiezan desde tabla 2
+        return 2 if operacion in ["multiplicación", "división", "potencia", "raíz"] else 1
+
     # ==================== PANTALLAS ====================
 
     def mostrar_pantalla_inicio(self):
@@ -368,7 +373,8 @@ class AgilidadMentalApp:
                 self.mostrar_resultados_finales()
                 return
             self.operacion_actual = self.operaciones_nivel[idx]
-            self.tabla_actual = 1
+            # Usar la tabla mínima de la nueva operación
+            self.tabla_actual = self.obtener_tabla_minima(self.operacion_actual)
 
         self.ejercicios = self.generar_ejercicios(self.operacion_actual)
 
@@ -876,6 +882,7 @@ class AgilidadMentalApp:
             self.operacion_actual = self.operaciones_nivel[0]
 
         nombre_op = self.obtener_nombre_operacion(self.operacion_actual)
+        tabla_minima = self.obtener_tabla_minima(self.operacion_actual)
 
         # Crear ventana de diálogo
         dialog = tk.Toplevel(self.root)
@@ -908,12 +915,17 @@ class AgilidadMentalApp:
         ).pack(pady=(5, 0))
 
         # Instrucción
+        texto_instruccion = "¿Hasta qué tabla quieres practicar?"
+        if tabla_minima == 2:
+            texto_instruccion += "\n(Esta operación comienza desde la tabla 2)"
+
         tk.Label(
             main_frame,
-            text="¿Hasta qué tabla quieres practicar?",
+            text=texto_instruccion,
             font=("Arial", 13),
             bg=Config.COLOR_BACKGROUND,
-            fg="#555"
+            fg="#555",
+            justify="center"
         ).pack(pady=(0, 20))
 
         # Spinbox
@@ -922,7 +934,7 @@ class AgilidadMentalApp:
 
         spin = tk.Spinbox(
             spin_container,
-            from_=1,
+            from_=tabla_minima,
             to=12,
             font=("Arial", 20, "bold"),
             width=8,
@@ -932,7 +944,7 @@ class AgilidadMentalApp:
             fg="#333"
         )
         spin.delete(0, "end")
-        spin.insert(0, "1")
+        spin.insert(0, str(tabla_minima))
         spin.pack(padx=10, pady=10)
 
         resultado = {"confirmado": False}
@@ -1000,7 +1012,8 @@ class AgilidadMentalApp:
         if resultado["confirmado"]:
             self.limites_tablas[self.operacion_actual] = resultado["valor"]
             self.tabla_max = resultado["valor"]
-            self.tabla_actual = 1
+            # La tabla actual debe iniciar desde tabla_minima
+            self.tabla_actual = tabla_minima
             self.mostrar_pantalla_ejercicios()
         else:
             self.mostrar_pantalla_datos()
@@ -1053,10 +1066,9 @@ class AgilidadMentalApp:
 
     def _generar_suma(self, tabla):
         """Genera un ejercicio de suma"""
-        if random.choice([True, False]):
-            a, b = tabla, random.randint(1, 100)
-        else:
-            a, b = random.randint(1, 100), tabla
+        # La suma siempre inicia con el número de la tabla
+        a = tabla
+        b = random.randint(1, 100)
 
         return {
             "texto": f"{a} + {b} =",
@@ -1065,12 +1077,17 @@ class AgilidadMentalApp:
 
     def _generar_resta(self, tabla):
         """Genera un ejercicio de resta"""
-        if random.choice([True, False]):
-            a = random.randint(tabla + 1, 200)
+        # Para evitar números negativos:
+        # - Si tabla = 1, debe ser A - 1 donde A >= 2
+        # - Si tabla > 1, puede ser tabla - X donde X < tabla
+        if tabla == 1:
+            # Caso especial: tabla = 1, entonces debe ser A - 1 donde A >= 2
+            a = random.randint(2, 100)
             b = tabla
         else:
-            b = random.randint(1, min(tabla, 100))
+            # Caso general: tabla - X donde X < tabla
             a = tabla
+            b = random.randint(1, tabla - 1)
 
         return {
             "texto": f"{a} - {b} =",
@@ -1079,10 +1096,9 @@ class AgilidadMentalApp:
 
     def _generar_multiplicacion(self, tabla):
         """Genera un ejercicio de multiplicación"""
-        if random.choice([True, False]):
-            a, b = tabla, random.randint(2, 12)
-        else:
-            a, b = random.randint(2, 12), tabla
+        # La multiplicación siempre inicia con el número de la tabla
+        a = tabla
+        b = random.randint(2, 12)
 
         return {
             "texto": f"{a} × {b} =",
@@ -1091,18 +1107,12 @@ class AgilidadMentalApp:
 
     def _generar_division(self, tabla):
         """Genera un ejercicio de división"""
-        if random.choice([True, False]):
-            b = tabla
-            resp = random.randint(2, 12)
-            a = b * resp
-        else:
-            a = tabla
-            if tabla == 1:
-                b, resp, a = 1, 1, 1
-            else:
-                b = random.randint(2, tabla)
-                resp = a // b
-                a = b * resp
+        # Para evitar decimales, generamos A ÷ tabla donde A = tabla * resp
+        # Esto garantiza divisiones exactas y que el número de la tabla aparezca
+        # Nota: La división siempre comienza desde tabla 2
+        b = tabla
+        resp = random.randint(2, 12)
+        a = b * resp
 
         return {
             "texto": f"{a} ÷ {b} =",
@@ -1350,7 +1360,8 @@ class AgilidadMentalApp:
             messagebox.showinfo("Operación Completada", mensaje)
 
             self.operacion_actual = siguiente_op
-            self.tabla_actual = 1
+            # Usar la tabla mínima de la nueva operación
+            self.tabla_actual = self.obtener_tabla_minima(siguiente_op)
             self.tiempo_total = 0
             self.solicitar_limite_tabla_operacion()
         else:
@@ -1397,7 +1408,14 @@ class AgilidadMentalApp:
     def calcular_nota_final(self):
         """Calcula la nota final con penalización por tiempo"""
         total_aciertos = sum(r["correctas"] for r in self.resultados_operacion.values())
-        total_preguntas = len(self.operaciones_nivel) * self.tabla_max * Config.EJERCICIOS_POR_TABLA
+
+        # Calcular el total de preguntas basado en las tablas realmente realizadas
+        total_preguntas = 0
+        for operacion in self.operaciones_nivel:
+            tabla_max_op = self.limites_tablas.get(operacion, self.tabla_max)
+            tabla_min_op = self.obtener_tabla_minima(operacion)
+            num_tablas = tabla_max_op - tabla_min_op + 1
+            total_preguntas += num_tablas * Config.EJERCICIOS_POR_TABLA
 
         nota = (total_aciertos / total_preguntas) * 100
 
