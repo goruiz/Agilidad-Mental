@@ -299,23 +299,15 @@ class AgilidadMentalApp:
 
     def _crear_boton_nivel_grande(self, parent, row, nivel, titulo, descripcion, detalle, color, emoji):
         """Crea un botón de nivel super grande y atractivo"""
-        # Frame contenedor con sombra simulada - usando grid
-        shadow_frame = ctk.CTkFrame(
-            parent,
-            fg_color="#BBBBBB",
-            corner_radius=20
-        )
-        shadow_frame.grid(row=row, column=0, pady=8, padx=20, sticky="nsew")
-
-        # Frame principal del botón
+        # Frame principal del botón - sin shadow frame pixeleado
         nivel_frame = ctk.CTkFrame(
-            shadow_frame,
+            parent,
             fg_color="white",
             corner_radius=15,
             border_width=4,
             border_color=color
         )
-        nivel_frame.pack(padx=3, pady=3, fill="both", expand=True)
+        nivel_frame.grid(row=row, column=0, pady=8, padx=20, sticky="nsew")
 
         # Contenedor interno
         inner_frame = ctk.CTkFrame(nivel_frame, fg_color="transparent")
@@ -840,38 +832,44 @@ class AgilidadMentalApp:
         tabla_minima = self.obtener_tabla_minima(self.operacion_actual)
         color_nivel = self.obtener_color_nivel(self.nivel)
 
-        # Dialog moderno
+        # Dialog moderno con tamaño fijo
         dialog = ctk.CTkToplevel(self.root)
         dialog.title(f"{nombre_op}")
         dialog.transient(self.root)
         dialog.grab_set()
 
+        # Establecer tamaño fijo de la ventana - MÁS PEQUEÑA
+        dialog_width = 450
+        dialog_height = 500
+
         # Frame principal
         main_frame = ctk.CTkFrame(
             dialog,
             fg_color="white",
-            corner_radius=30,
-            border_width=6,
-            border_color=color_nivel
+            corner_radius=25,
+            border_width=5,
+            border_color=color_nivel,
+            width=dialog_width,
+            height=dialog_height
         )
-        main_frame.pack(padx=50, pady=50, fill="both", expand=True)
+        main_frame.pack(padx=20, pady=20)
 
-        # Emoji gigante
+        # Emoji más pequeño
         ctk.CTkLabel(
             main_frame,
             text=emoji_op,
-            font=("Segoe UI Emoji", 80)
-        ).pack(pady=(30, 10))
+            font=("Segoe UI Emoji", 50)
+        ).pack(pady=(20, 5))
 
-        # Título
+        # Título más pequeño
         ctk.CTkLabel(
             main_frame,
             text=nombre_op.upper(),
-            font=("Comic Sans MS", 36, "bold"),
+            font=("Comic Sans MS", 24, "bold"),
             text_color=color_nivel
         ).pack()
 
-        # Pregunta
+        # Pregunta más compacta
         pregunta_text = "¿Hasta qué tabla quieres practicar? 🎯"
         if tabla_minima == 2:
             pregunta_text += "\n(Comienza desde la tabla 2)"
@@ -879,29 +877,29 @@ class AgilidadMentalApp:
         ctk.CTkLabel(
             main_frame,
             text=pregunta_text,
-            font=("Comic Sans MS", 20),
+            font=("Comic Sans MS", 14),
             text_color="#666666",
             justify="center"
-        ).pack(pady=(20, 30))
+        ).pack(pady=(10, 15))
 
-        # Frame del valor
+        # Frame del valor más pequeño
         valor_frame = ctk.CTkFrame(
             main_frame,
             fg_color=color_nivel,
-            corner_radius=25,
-            height=150
+            corner_radius=20,
+            height=100
         )
-        valor_frame.pack(fill="x", padx=40, pady=20)
+        valor_frame.pack(fill="x", padx=30, pady=15)
 
         valor_label = ctk.CTkLabel(
             valor_frame,
             text=f"TABLA {tabla_minima}",
-            font=("Comic Sans MS", 48, "bold"),
+            font=("Comic Sans MS", 36, "bold"),
             text_color="white"
         )
-        valor_label.pack(pady=30)
+        valor_label.pack(pady=20)
 
-        # Slider grande
+        # Slider más pequeño
         def actualizar_valor(value):
             valor_label.configure(text=f"TABLA {int(value)}")
 
@@ -910,15 +908,15 @@ class AgilidadMentalApp:
             from_=tabla_minima,
             to=12,
             number_of_steps=12-tabla_minima,
-            width=400,
-            height=30,
+            width=320,
+            height=25,
             button_color=color_nivel,
             button_hover_color=self._oscurecer_color(color_nivel),
             progress_color=color_nivel,
             command=actualizar_valor
         )
         slider.set(tabla_minima)
-        slider.pack(pady=(10, 30), padx=40)
+        slider.pack(pady=(10, 20), padx=30)
 
         resultado = {"confirmado": False}
 
@@ -931,44 +929,43 @@ class AgilidadMentalApp:
             resultado["confirmado"] = False
             dialog.destroy()
 
-        # Botones grandes
+        # Botones más pequeños
         buttons_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-        buttons_frame.pack(pady=(10, 30))
+        buttons_frame.pack(pady=(10, 20))
 
         ctk.CTkButton(
             buttons_frame,
             text="✅ ¡LISTO!",
-            font=("Comic Sans MS", 24, "bold"),
-            width=200,
-            height=70,
-            corner_radius=20,
+            font=("Comic Sans MS", 16, "bold"),
+            width=140,
+            height=50,
+            corner_radius=15,
             fg_color=Config.COLOR_VERDE_BRILLANTE,
             hover_color=self._oscurecer_color(Config.COLOR_VERDE_BRILLANTE),
             command=confirmar
-        ).pack(side="left", padx=15)
+        ).pack(side="left", padx=10)
 
         ctk.CTkButton(
             buttons_frame,
             text="❌ CANCELAR",
-            font=("Comic Sans MS", 24, "bold"),
-            width=200,
-            height=70,
-            corner_radius=20,
+            font=("Comic Sans MS", 16, "bold"),
+            width=140,
+            height=50,
+            corner_radius=15,
             fg_color=Config.COLOR_ROJO_BRILLANTE,
             hover_color=self._oscurecer_color(Config.COLOR_ROJO_BRILLANTE),
             command=cancelar
-        ).pack(side="left", padx=15)
+        ).pack(side="left", padx=10)
 
         dialog.bind('<Return>', lambda e: confirmar())
         dialog.bind('<Escape>', lambda e: cancelar())
 
-        # Centrar
+        # Centrar con el tamaño definido
         dialog.update_idletasks()
-        width = dialog.winfo_width()
-        height = dialog.winfo_height()
-        x = (dialog.winfo_screenwidth() // 2) - (width // 2)
-        y = (dialog.winfo_screenheight() // 2) - (height // 2)
-        dialog.geometry(f"+{x}+{y}")
+        x = (dialog.winfo_screenwidth() // 2) - (dialog_width // 2)
+        y = (dialog.winfo_screenheight() // 2) - (dialog_height // 2)
+        dialog.geometry(f"{dialog_width}x{dialog_height}+{x}+{y}")
+        dialog.resizable(False, False)
 
         self.root.wait_window(dialog)
 
