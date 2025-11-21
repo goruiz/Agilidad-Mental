@@ -56,7 +56,8 @@ class Config:
     NIVEL_3_TIEMPO_MAXIMO = 12 * 60     # 12 minutos
 
     # Ejercicios
-    EJERCICIOS_POR_TABLA = 12
+    EJERCICIOS_POR_TABLA = 13  # Máximo de ejercicios (suma, multiplicación, división, potencia, raíz)
+    # Nota: Resta tiene tabla+1 ejercicios (ej: tabla 3 = 4 ejercicios)
     MAX_INTENTOS_GENERACION = 1000
 
     # Penalización
@@ -425,10 +426,10 @@ class AgilidadMentalApp:
         tk.Label(
             ejercicios_frame,
             text=f"Operaciones de {nombre_op}",
-            font=("Arial", 24, "bold"),
+            font=("Arial", 20, "bold"),
             bg=Config.COLOR_BACKGROUND,
             fg=Config.COLOR_PRIMARY
-        ).pack(anchor="center", pady=(0, 25))
+        ).pack(anchor="center", pady=(0, 15))
 
         # Ejercicios
         self.entries = {}
@@ -438,11 +439,11 @@ class AgilidadMentalApp:
     def _crear_ejercicio(self, parent, ejercicio):
         """Crea una fila con un ejercicio individual"""
         row_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
-        row_frame.pack(pady=6, anchor="w", padx=80)
+        row_frame.pack(pady=3, anchor="w", padx=80)
 
         # Configurar grid para alineación perfecta
-        row_frame.grid_columnconfigure(0, minsize=250)  # Espacio fijo para la operación
-        row_frame.grid_columnconfigure(1, minsize=150)  # Espacio fijo para el input
+        row_frame.grid_columnconfigure(0, minsize=220)  # Espacio fijo para la operación
+        row_frame.grid_columnconfigure(1, minsize=130)  # Espacio fijo para el input
 
         # Manejar potencias con superíndice
         if "^" in ejercicio["texto"]:
@@ -451,17 +452,17 @@ class AgilidadMentalApp:
             tk.Label(
                 row_frame,
                 text=ejercicio["texto"],
-                font=("Arial", 18, "bold"),
+                font=("Arial", 15, "bold"),
                 bg=Config.COLOR_BACKGROUND,
                 anchor="e"
-            ).grid(row=0, column=0, sticky="e", padx=(0, 15))
+            ).grid(row=0, column=0, sticky="e", padx=(0, 12))
 
         # Entry para la respuesta
         vcmd = (self.root.register(self.validar_numero), '%P')
         entry = tk.Entry(
             row_frame,
-            font=("Arial", 18),
-            width=10,
+            font=("Arial", 15),
+            width=9,
             justify="center",
             bd=2,
             relief="solid",
@@ -475,7 +476,7 @@ class AgilidadMentalApp:
     def _crear_ejercicio_potencia(self, parent, ejercicio):
         """Crea un ejercicio de potencia con superíndice"""
         op_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
-        op_frame.grid(row=0, column=0, sticky="e", padx=(0, 15))
+        op_frame.grid(row=0, column=0, sticky="e", padx=(0, 12))
 
         parts = ejercicio["texto"].split("^")
         base = parts[0].strip()
@@ -484,21 +485,21 @@ class AgilidadMentalApp:
         tk.Label(
             op_frame,
             text=base,
-            font=("Arial", 18, "bold"),
+            font=("Arial", 15, "bold"),
             bg=Config.COLOR_BACKGROUND
         ).pack(side="left")
 
         tk.Label(
             op_frame,
             text=exp_part,
-            font=("Arial", 11, "bold"),
+            font=("Arial", 9, "bold"),
             bg=Config.COLOR_BACKGROUND
-        ).pack(side="left", anchor="n", pady=(0, 8))
+        ).pack(side="left", anchor="n", pady=(0, 6))
 
         tk.Label(
             op_frame,
             text=" =",
-            font=("Arial", 18, "bold"),
+            font=("Arial", 15, "bold"),
             bg=Config.COLOR_BACKGROUND
         ).pack(side="left")
 
@@ -1064,35 +1065,43 @@ class AgilidadMentalApp:
     # ==================== GENERACIÓN DE EJERCICIOS ====================
 
     def generar_ejercicios(self, operacion):
-        """Genera exactamente 12 ejercicios para la operación y tabla actual"""
+        """Genera ejercicios según la operación y tabla actual"""
         ejercicios = []
-        ejercicios_set = set()
         tabla = self.tabla_actual
-        intentos = 0
+        numeros = list(range(0, 13))  # [0, 1, 2, ..., 12] - para operaciones que usan todos
 
-        while len(ejercicios) < Config.EJERCICIOS_POR_TABLA:
-            intentos += 1
+        # Generar ejercicios según el tipo de operación
+        if operacion == "resta":
+            # Para resta: solo números de 0 hasta tabla (tabla + 1 ejercicios)
+            # Ejemplo: Tabla 3 -> 3-0, 3-1, 3-2, 3-3 (4 ejercicios)
+            numeros_validos = list(range(0, tabla + 1))  # [0, 1, ..., tabla]
 
-            # Si hemos intentado demasiadas veces, forzar la generación
-            if intentos > Config.MAX_INTENTOS_GENERACION:
-                # Reiniciar el contador y limpiar el set para permitir ejercicios repetidos si es necesario
-                intentos = 0
-                ejercicios_set.clear()
-
-            ejercicio = self._generar_ejercicio_por_tipo(operacion, tabla)
-            if ejercicio is None:
-                continue
-
-            texto = ejercicio["texto"]
-            if texto not in ejercicios_set:
-                ejercicios_set.add(texto)
-                ejercicio["id"] = len(ejercicios)
+            for num in numeros_validos:
+                ejercicio = {
+                    "texto": f"{tabla} - {num} =",
+                    "respuesta": tabla - num
+                }
                 ejercicios.append(ejercicio)
 
-        # Validar que tenemos exactamente 12 ejercicios
-        if len(ejercicios) != Config.EJERCICIOS_POR_TABLA:
-            raise ValueError(f"Error: Se generaron {len(ejercicios)} ejercicios en lugar de {Config.EJERCICIOS_POR_TABLA}")
+        elif operacion == "división":
+            # Para división: siempre 13 ejercicios (números del 0 al 12)
+            # El número de la tabla va en SEGUNDO lugar (denominador)
+            # Ejemplo Tabla 2: 0÷2=0, 2÷2=1, 4÷2=2, ..., 24÷2=12
+            for num in numeros:  # num va de 0 a 12
+                dividendo = tabla * num  # Así el resultado es num
+                ejercicio = {
+                    "texto": f"{dividendo} ÷ {tabla} =",
+                    "respuesta": num
+                }
+                ejercicios.append(ejercicio)
+        else:
+            # Para suma, multiplicación, potencia y raíz: usar todos los números del 0 al 12
+            for num in numeros:
+                ejercicio = self._generar_ejercicio_por_tipo(operacion, tabla, num)
+                if ejercicio:
+                    ejercicios.append(ejercicio)
 
+        # Mezclar ejercicios de forma aleatoria
         random.shuffle(ejercicios)
 
         # Reasignar IDs después de mezclar
@@ -1101,8 +1110,8 @@ class AgilidadMentalApp:
 
         return ejercicios
 
-    def _generar_ejercicio_por_tipo(self, operacion, tabla):
-        """Genera un ejercicio individual según el tipo de operación"""
+    def _generar_ejercicio_por_tipo(self, operacion, tabla, num):
+        """Genera un ejercicio individual según el tipo de operación con un número específico"""
         generadores = {
             "suma": self._generar_suma,
             "resta": self._generar_resta,
@@ -1114,102 +1123,86 @@ class AgilidadMentalApp:
 
         generador = generadores.get(operacion)
         if generador:
-            return generador(tabla)
+            return generador(tabla, num)
         return None
 
-    def _generar_suma(self, tabla):
+    def _generar_suma(self, tabla, num):
         """Genera un ejercicio de suma"""
         # La suma siempre inicia con el número de la tabla
         a = tabla
-        b = random.randint(1, 100)
+        b = num  # Usar el número proporcionado (0 a 12)
 
         return {
             "texto": f"{a} + {b} =",
             "respuesta": a + b
         }
 
-    def _generar_resta(self, tabla):
+    def _generar_resta(self, tabla, num):
         """Genera un ejercicio de resta"""
-        # Para evitar números negativos:
-        # - Si tabla = 1, debe ser A - 1 donde A >= 2
-        # - Si tabla > 1, puede ser tabla - X donde X < tabla
-        if tabla == 1:
-            # Caso especial: tabla = 1, entonces debe ser A - 1 donde A >= 2
-            a = random.randint(2, 100)
-            b = tabla
-        else:
-            # Caso general: tabla - X donde X < tabla
-            a = tabla
-            b = random.randint(1, tabla - 1)
-
+        # La resta siempre es tabla - num para evitar negativos
+        # Esto ya está manejado en generar_ejercicios()
+        # Este método no debería ser llamado directamente para resta
         return {
-            "texto": f"{a} - {b} =",
-            "respuesta": a - b
+            "texto": f"{tabla} - {num} =",
+            "respuesta": tabla - num
         }
 
-    def _generar_multiplicacion(self, tabla):
+    def _generar_multiplicacion(self, tabla, num):
         """Genera un ejercicio de multiplicación"""
         # La multiplicación siempre inicia con el número de la tabla
         a = tabla
-        b = random.randint(2, 12)
+        b = num  # Usar el número proporcionado (0 a 12)
 
         return {
             "texto": f"{a} × {b} =",
             "respuesta": a * b
         }
 
-    def _generar_division(self, tabla):
+    def _generar_division(self, tabla, num):
         """Genera un ejercicio de división"""
-        # Para evitar decimales, generamos A ÷ tabla donde A = tabla * resp
-        # Esto garantiza divisiones exactas y que el número de la tabla aparezca
-        # Nota: La división siempre comienza desde tabla 2
-        b = tabla
-        resp = random.randint(2, 12)
-        a = b * resp
-
+        # La división siempre es (tabla × num) ÷ tabla = num
+        # Esto ya está manejado en generar_ejercicios()
+        # Este método no debería ser llamado directamente para división
+        a = tabla * num
         return {
-            "texto": f"{a} ÷ {b} =",
-            "respuesta": resp
+            "texto": f"{a} ÷ {tabla} =",
+            "respuesta": num
         }
 
-    def _generar_potencia(self, tabla):
+    def _generar_potencia(self, tabla, num):
         """Genera un ejercicio de potenciación"""
-        # El exponente es igual al número de la serie (tabla)
-        exp = tabla
-
-        # La base es un número aleatorio entre 2 y 15 para tener más variedad
-        base = random.randint(2, 15)
+        # La base es el número de la tabla (siempre el primer dígito)
+        base = tabla
+        # El exponente es el número proporcionado (0 a 12)
+        exp = num
 
         return {
             "texto": f"{base}^{exp} =",
             "respuesta": base ** exp
         }
 
-    def _generar_raiz(self, tabla):
+    def _generar_raiz(self, tabla, num):
         """Genera un ejercicio de radicación"""
-        # El índice de la raíz es igual al número de la serie (tabla)
+        # El índice de la raíz es el número de la tabla actual
         indice_raiz = tabla
+        # El resultado será num (de 0 a 12)
+        # Por lo tanto, el radicando es num^indice_raiz
 
-        # La base es un número aleatorio entre 2 y 15 para tener más variedad
-        base = random.randint(2, 15)
-
-        # Calcular el número del que se sacará la raíz
-        num = base ** indice_raiz
-        resp = base
+        radicando = num ** indice_raiz
+        respuesta = num
 
         # Mostrar según el índice de la raíz
-        if indice_raiz == 1:
-            texto = f"∜{num} =".replace("∜", "¹√")  # Raíz 1
-        elif indice_raiz == 2:
-            texto = f"√{num} ="  # Raíz cuadrada (común)
+        if indice_raiz == 2:
+            texto = f"√{radicando} ="  # Raíz cuadrada (común)
         elif indice_raiz == 3:
-            texto = f"∛{num} ="  # Raíz cúbica
+            texto = f"∛{radicando} ="  # Raíz cúbica
         else:
-            texto = f"ⁿ√{num} =".replace("ⁿ", str(indice_raiz))  # Raíz n-ésima
+            # Para índices mayores, usar notación con superíndice
+            texto = f"ⁿ√{radicando} =".replace("ⁿ", str(indice_raiz))  # Raíz n-ésima
 
         return {
             "texto": texto,
-            "respuesta": resp
+            "respuesta": respuesta
         }
 
     # ==================== CONTROL DE TIEMPO ====================
@@ -1359,12 +1352,13 @@ class AgilidadMentalApp:
     def _guardar_resultado(self, correctas, incorrectas):
         """Guarda el resultado de la operación actual"""
         clave = f"{self.operacion_actual}_tabla{self.tabla_actual}"
+        total_ejercicios = len(self.ejercicios)  # Usar el total real de ejercicios generados
         self.resultados_operacion[clave] = {
             "operacion": self.operacion_actual,
             "tabla": self.tabla_actual,
             "correctas": correctas,
             "incorrectas": incorrectas,
-            "total": Config.EJERCICIOS_POR_TABLA,
+            "total": total_ejercicios,
             "tiempo": self.tiempo_total
         }
 
@@ -1383,11 +1377,12 @@ class AgilidadMentalApp:
     def _mostrar_mensaje_finalizacion(self, correctas):
         """Muestra mensaje informativo al finalizar una operación"""
         nombre_op = self.obtener_nombre_operacion(self.operacion_actual)
+        total_ejercicios = len(self.ejercicios)
 
         messagebox.showinfo(
             "¡Operación Completada!",
             f"{nombre_op} - TABLA DEL {self.tabla_actual}\n\n"
-            f"Aciertos: {correctas}/{Config.EJERCICIOS_POR_TABLA}\n"
+            f"Aciertos: {correctas}/{total_ejercicios}\n"
             f"Tiempo usado: {int(self.tiempo_total//60):02d}:{int(self.tiempo_total%60):02d}"
         )
 
@@ -1422,8 +1417,7 @@ class AgilidadMentalApp:
 
     def mostrar_resumen_operacion_completa(self):
         """Muestra el resumen de todas las tablas de la operación actual"""
-        correctas_total, tiempo_total_op, num_tablas = self._calcular_totales_operacion()
-        total_preguntas = num_tablas * Config.EJERCICIOS_POR_TABLA
+        correctas_total, tiempo_total_op, total_preguntas = self._calcular_totales_operacion()
 
         nombre_op = self.obtener_nombre_operacion(self.operacion_actual)
 
@@ -1454,15 +1448,15 @@ class AgilidadMentalApp:
         """Calcula los totales de la operación actual"""
         correctas_total = 0
         tiempo_total_op = 0
-        num_tablas = 0
+        total_preguntas = 0
 
         for clave, r in self.resultados_operacion.items():
             if r["operacion"] == self.operacion_actual:
                 correctas_total += r["correctas"]
                 tiempo_total_op += r["tiempo"]
-                num_tablas += 1
+                total_preguntas += r["total"]
 
-        return correctas_total, tiempo_total_op, num_tablas
+        return correctas_total, tiempo_total_op, total_preguntas
 
     # ==================== RESULTADOS ====================
 
@@ -1474,14 +1468,14 @@ class AgilidadMentalApp:
 
         texto = "RESULTADOS HASTA AHORA\n\n"
         total_ac = sum(r["correctas"] for r in self.resultados_operacion.values())
-        total_pr = len(self.resultados_operacion) * Config.EJERCICIOS_POR_TABLA
+        total_pr = sum(r["total"] for r in self.resultados_operacion.values())
 
         for clave, r in sorted(self.resultados_operacion.items()):
             op = r["operacion"]
             tabla = r["tabla"]
             mins = int(r["tiempo"] // 60)
             secs = int(r["tiempo"] % 60)
-            texto += f"{op.upper()} - Tabla {tabla}: {r['correctas']}/{Config.EJERCICIOS_POR_TABLA}  |  {mins:02d}:{secs:02d}\n"
+            texto += f"{op.upper()} - Tabla {tabla}: {r['correctas']}/{r['total']}  |  {mins:02d}:{secs:02d}\n"
 
         texto += f"\nTOTAL: {total_ac}/{total_pr}"
         messagebox.showinfo("Resultados Parciales", texto)
@@ -1489,16 +1483,9 @@ class AgilidadMentalApp:
     def calcular_nota_final(self):
         """Calcula la nota final con penalización por tiempo"""
         total_aciertos = sum(r["correctas"] for r in self.resultados_operacion.values())
+        total_preguntas = sum(r["total"] for r in self.resultados_operacion.values())
 
-        # Calcular el total de preguntas basado en las tablas realmente realizadas
-        total_preguntas = 0
-        for operacion in self.operaciones_nivel:
-            tabla_max_op = self.limites_tablas.get(operacion, self.tabla_max)
-            tabla_min_op = self.obtener_tabla_minima(operacion)
-            num_tablas = tabla_max_op - tabla_min_op + 1
-            total_preguntas += num_tablas * Config.EJERCICIOS_POR_TABLA
-
-        nota = (total_aciertos / total_preguntas) * 100
+        nota = (total_aciertos / total_preguntas) * 100 if total_preguntas > 0 else 0
 
         penalizacion_total = 0
         for clave, r in self.resultados_operacion.items():
