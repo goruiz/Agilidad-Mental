@@ -1406,12 +1406,22 @@ class AgilidadMentalApp:
         """Avanza a la siguiente tabla u operación"""
         clave_actual = f"{self.operacion_actual}_tabla{self.tabla_actual}"
 
+        # Si no se ha guardado, guardar los resultados actuales antes de avanzar
         if clave_actual not in self.resultados_operacion:
             if not messagebox.askyesno(
                 "Advertencia",
                 "¿Pasar a la siguiente tabla sin guardar esta?"
             ):
                 return
+
+            # Detener el cronómetro si está corriendo
+            if self.corriendo:
+                self.detener_cronometro()
+
+            # Guardar resultados de la tabla actual (aunque esté sin finalizar)
+            correctas, incorrectas = self._evaluar_respuestas()
+            self._guardar_resultado(correctas, incorrectas)
+            self.finalizado = True
 
         if self.tabla_actual < self.tabla_max:
             self.tabla_actual += 1
