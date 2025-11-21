@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 import math
 import os
@@ -384,8 +384,8 @@ class AgilidadMentalApp:
     def mostrar_pantalla_ejercicios(self):
         """Pantalla principal con los ejercicios de la operación actual"""
         self.limpiar_pantalla()
+        # Pausar el cronómetro pero no reiniciar el tiempo
         self.corriendo = False
-        self.tiempo_total = 0
         self.finalizado = False
 
         # Verificar si debe avanzar a la siguiente operación
@@ -566,10 +566,14 @@ class AgilidadMentalApp:
         cronometro_frame = tk.Frame(parent, bg=Config.COLOR_BACKGROUND)
         cronometro_frame.grid(row=0, column=2, sticky="n", padx=(15, 0), pady=65)
 
+        # Calcular el tiempo actual para mostrarlo
+        mins = int(self.tiempo_total // 60)
+        secs = int(self.tiempo_total % 60)
+
         # Cronómetro - del alto de dos botones
         self.label_tiempo = tk.Label(
             cronometro_frame,
-            text="Tiempo: 00:00",
+            text=f"Tiempo: {mins:02d}:{secs:02d}",
             font=("Arial", 18, "bold"),
             bg=Config.COLOR_TIMER_BG,
             fg=Config.COLOR_TIMER_NORMAL,
@@ -1217,7 +1221,8 @@ class AgilidadMentalApp:
             return
 
         if not self.corriendo:
-            self.tiempo_inicio = datetime.now()
+            # Ajustar tiempo_inicio para que el tiempo continúe desde donde se quedó
+            self.tiempo_inicio = datetime.now() - timedelta(seconds=self.tiempo_total)
             self.corriendo = True
 
             for entry in self.entries.values():
@@ -1242,9 +1247,9 @@ class AgilidadMentalApp:
             self.actualizar_cronometro()
 
     def detener_cronometro(self):
-        """Detiene el cronómetro"""
+        """Detiene el cronómetro y guarda el tiempo acumulado"""
         if self.corriendo:
-            self.tiempo_total += (datetime.now() - self.tiempo_inicio).total_seconds()
+            self.tiempo_total = (datetime.now() - self.tiempo_inicio).total_seconds()
             self.corriendo = False
 
     def actualizar_cronometro(self):
@@ -1252,7 +1257,7 @@ class AgilidadMentalApp:
         if not self.corriendo:
             return
 
-        elapsed = (datetime.now() - self.tiempo_inicio).total_seconds() + self.tiempo_total
+        elapsed = (datetime.now() - self.tiempo_inicio).total_seconds()
         mins = int(elapsed // 60)
         secs = int(elapsed % 60)
 
@@ -1410,7 +1415,6 @@ class AgilidadMentalApp:
 
         if self.tabla_actual < self.tabla_max:
             self.tabla_actual += 1
-            self.tiempo_total = 0
             self.mostrar_pantalla_ejercicios()
         else:
             self.mostrar_resumen_operacion_completa()
@@ -1437,7 +1441,6 @@ class AgilidadMentalApp:
             self.operacion_actual = siguiente_op
             # Usar la tabla mínima de la nueva operación
             self.tabla_actual = self.obtener_tabla_minima(siguiente_op)
-            self.tiempo_total = 0
             self.solicitar_limite_tabla_operacion()
         else:
             mensaje += "¡Ha completado todas las operaciones!"
