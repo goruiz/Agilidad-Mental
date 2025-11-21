@@ -31,8 +31,8 @@ class Config:
     """Configuración y constantes del programa - Diseño para niños"""
 
     # Dimensiones
-    WINDOW_WIDTH = 1400
-    WINDOW_HEIGHT = 900
+    WINDOW_WIDTH = 1200
+    WINDOW_HEIGHT = 700
 
     # Paleta de colores vibrantes para niños
     COLOR_BG_GRADIENT_1 = "#E3F2FD"  # Azul muy claro
@@ -125,12 +125,19 @@ class AgilidadMentalApp:
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
 
-        # Centrar ventana
-        x = (screen_width - Config.WINDOW_WIDTH) // 2
-        y = (screen_height - Config.WINDOW_HEIGHT) // 2
+        # Calcular tamaño de ventana (80% de la pantalla, pero no más que los valores configurados)
+        window_width = min(Config.WINDOW_WIDTH, int(screen_width * 0.8))
+        window_height = min(Config.WINDOW_HEIGHT, int(screen_height * 0.85))
 
-        self.root.geometry(f"{Config.WINDOW_WIDTH}x{Config.WINDOW_HEIGHT}+{x}+{y}")
+        # Centrar ventana
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+
+        self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
         self.root.configure(bg="#E3F2FD")
+
+        # Configurar tamaño mínimo
+        self.root.minsize(900, 600)
 
         # Asegurar que la ventana sea redimensionable y tenga botones de control
         self.root.resizable(True, True)
@@ -203,22 +210,22 @@ class AgilidadMentalApp:
         main_container.pack(fill="both", expand=True)
 
         # ENCABEZADO GRANDE Y COLORIDO
-        header_frame = ctk.CTkFrame(main_container, fg_color="transparent", height=200)
-        header_frame.pack(fill="x", pady=(40, 20))
+        header_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        header_frame.pack(fill="x", pady=(20, 5))
 
         # Título principal con estilo infantil
         title_label = ctk.CTkLabel(
             header_frame,
             text="🌟 ¡AGILIDAD MENTAL! 🌟",
-            font=("Comic Sans MS", 52, "bold"),
+            font=("Comic Sans MS", 40, "bold"),
             text_color=Config.COLOR_MORADO_BRILLANTE
         )
-        title_label.pack(pady=(0, 10))
+        title_label.pack(pady=(0, 5))
 
         subtitle_label = ctk.CTkLabel(
             header_frame,
             text="Academia Naval Cap. Leonardo Abad Guerra",
-            font=("Comic Sans MS", 20),
+            font=("Comic Sans MS", 16),
             text_color=Config.COLOR_AZUL_BRILLANTE
         )
         subtitle_label.pack()
@@ -227,18 +234,25 @@ class AgilidadMentalApp:
         mensaje_label = ctk.CTkLabel(
             header_frame,
             text="¡Elige tu nivel y demuestra lo que sabes! 💪🧠",
-            font=("Comic Sans MS", 18, "bold"),
+            font=("Comic Sans MS", 14, "bold"),
             text_color=Config.COLOR_NARANJA_BRILLANTE
         )
-        mensaje_label.pack(pady=(10, 0))
+        mensaje_label.pack(pady=(5, 0))
 
         # CONTENEDOR DE BOTONES DE NIVEL
         niveles_container = ctk.CTkFrame(main_container, fg_color="transparent")
-        niveles_container.pack(expand=True, pady=20)
+        niveles_container.pack(expand=True, fill="both", pady=10, padx=20)
+
+        # Configurar grid para distribución equitativa
+        niveles_container.grid_rowconfigure(0, weight=1)
+        niveles_container.grid_rowconfigure(1, weight=1)
+        niveles_container.grid_rowconfigure(2, weight=1)
+        niveles_container.grid_columnconfigure(0, weight=1)
 
         # NIVEL 1 - VERDE
         self._crear_boton_nivel_grande(
             niveles_container,
+            row=0,
             nivel=1,
             titulo="🌟 NIVEL 1 🌟",
             descripcion="Suma y Resta",
@@ -250,6 +264,7 @@ class AgilidadMentalApp:
         # NIVEL 2 - NARANJA
         self._crear_boton_nivel_grande(
             niveles_container,
+            row=1,
             nivel=2,
             titulo="⭐ NIVEL 2 ⭐",
             descripcion="Suma, Resta, Multiplicación y División",
@@ -261,6 +276,7 @@ class AgilidadMentalApp:
         # NIVEL 3 - ROSA
         self._crear_boton_nivel_grande(
             niveles_container,
+            row=2,
             nivel=3,
             titulo="✨ NIVEL 3 ✨",
             descripcion="Todas las operaciones + Potencia y Raíz",
@@ -270,64 +286,65 @@ class AgilidadMentalApp:
         )
 
         # Footer decorativo
-        footer_frame = ctk.CTkFrame(main_container, fg_color="transparent", height=60)
-        footer_frame.pack(fill="x", side="bottom", pady=20)
+        footer_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        footer_frame.pack(fill="x", side="bottom", pady=10)
 
         footer_label = ctk.CTkLabel(
             footer_frame,
             text="🎯 ¡Diviértete mientras aprendes! 🎯",
-            font=("Comic Sans MS", 16, "bold"),
+            font=("Comic Sans MS", 14, "bold"),
             text_color=Config.COLOR_CYAN_BRILLANTE
         )
         footer_label.pack()
 
-    def _crear_boton_nivel_grande(self, parent, nivel, titulo, descripcion, detalle, color, emoji):
+    def _crear_boton_nivel_grande(self, parent, row, nivel, titulo, descripcion, detalle, color, emoji):
         """Crea un botón de nivel super grande y atractivo"""
-        # Frame contenedor con sombra simulada
+        # Frame contenedor con sombra simulada - usando grid
         shadow_frame = ctk.CTkFrame(
             parent,
             fg_color="#BBBBBB",
-            corner_radius=25,
-            height=140
+            corner_radius=20
         )
-        shadow_frame.pack(pady=15, padx=80, fill="x")
+        shadow_frame.grid(row=row, column=0, pady=8, padx=20, sticky="nsew")
 
         # Frame principal del botón
         nivel_frame = ctk.CTkFrame(
             shadow_frame,
             fg_color="white",
-            corner_radius=20,
-            border_width=5,
+            corner_radius=15,
+            border_width=4,
             border_color=color
         )
         nivel_frame.pack(padx=3, pady=3, fill="both", expand=True)
 
         # Contenedor interno
         inner_frame = ctk.CTkFrame(nivel_frame, fg_color="transparent")
-        inner_frame.pack(fill="both", expand=True, padx=20, pady=15)
+        inner_frame.pack(fill="both", expand=True, padx=15, pady=10)
 
-        # Configurar grid
-        inner_frame.grid_columnconfigure(0, weight=0)  # Emoji
-        inner_frame.grid_columnconfigure(1, weight=1)  # Texto
-        inner_frame.grid_columnconfigure(2, weight=0)  # Botón
+        # Configurar grid con pesos para responsividad
+        inner_frame.grid_columnconfigure(0, weight=0, minsize=70)   # Emoji
+        inner_frame.grid_columnconfigure(1, weight=1, minsize=250)  # Texto
+        inner_frame.grid_columnconfigure(2, weight=0, minsize=120)  # Botón
+        inner_frame.grid_rowconfigure(0, weight=1)
+        inner_frame.grid_rowconfigure(1, weight=1)
 
         # Emoji grande a la izquierda
         emoji_label = ctk.CTkLabel(
             inner_frame,
             text=emoji,
-            font=("Segoe UI Emoji", 70),
+            font=("Segoe UI Emoji", 50),
         )
-        emoji_label.grid(row=0, column=0, rowspan=2, padx=(10, 30))
+        emoji_label.grid(row=0, column=0, rowspan=2, padx=(5, 15), sticky="")
 
         # Título
         titulo_label = ctk.CTkLabel(
             inner_frame,
             text=titulo,
-            font=("Comic Sans MS", 28, "bold"),
+            font=("Comic Sans MS", 22, "bold"),
             text_color=color,
             anchor="w"
         )
-        titulo_label.grid(row=0, column=1, sticky="w", pady=(5, 0))
+        titulo_label.grid(row=0, column=1, sticky="w", pady=(2, 0))
 
         # Descripción
         desc_frame = ctk.CTkFrame(inner_frame, fg_color="transparent")
@@ -336,7 +353,7 @@ class AgilidadMentalApp:
         desc_label = ctk.CTkLabel(
             desc_frame,
             text=descripcion,
-            font=("Comic Sans MS", 16),
+            font=("Comic Sans MS", 13),
             text_color="#555555",
             anchor="w"
         )
@@ -345,7 +362,7 @@ class AgilidadMentalApp:
         detalle_label = ctk.CTkLabel(
             desc_frame,
             text=detalle,
-            font=("Comic Sans MS", 14, "italic"),
+            font=("Comic Sans MS", 11, "italic"),
             text_color=color,
             anchor="w"
         )
@@ -354,16 +371,16 @@ class AgilidadMentalApp:
         # Botón grande de selección
         boton = ctk.CTkButton(
             inner_frame,
-            text="¡JUGAR! 🚀",
-            font=("Comic Sans MS", 24, "bold"),
-            width=200,
-            height=90,
-            corner_radius=20,
+            text="¡JUGAR!\n🚀",
+            font=("Comic Sans MS", 18, "bold"),
+            width=120,
+            height=70,
+            corner_radius=15,
             fg_color=color,
             hover_color=self._oscurecer_color(color),
             command=lambda: self.seleccionar_nivel(nivel)
         )
-        boton.grid(row=0, column=2, rowspan=2, padx=(30, 10))
+        boton.grid(row=0, column=2, rowspan=2, padx=(10, 5), pady=5)
 
     def _oscurecer_color(self, color_hex):
         """Oscurece un color"""
@@ -380,32 +397,18 @@ class AgilidadMentalApp:
         main_frame = ctk.CTkFrame(self.root, fg_color="#E3F2FD")
         main_frame.pack(fill="both", expand=True)
 
-        # Botón volver decorativo
-        volver_btn = ctk.CTkButton(
-            main_frame,
-            text="⬅️ Volver",
-            font=("Comic Sans MS", 16, "bold"),
-            width=140,
-            height=50,
-            corner_radius=25,
-            fg_color=Config.COLOR_AZUL_BRILLANTE,
-            hover_color=self._oscurecer_color(Config.COLOR_AZUL_BRILLANTE),
-            command=self.mostrar_pantalla_inicio
-        )
-        volver_btn.place(x=30, y=30)
-
-        # Contenedor central
+        # Contenedor central sin scroll - tamaño fijo
         center_frame = ctk.CTkFrame(
             main_frame,
             fg_color="white",
-            corner_radius=30,
-            border_width=6,
+            corner_radius=20,
+            border_width=4,
             border_color=self.obtener_color_nivel(self.nivel)
         )
         center_frame.place(relx=0.5, rely=0.5, anchor="center")
 
         content_frame = ctk.CTkFrame(center_frame, fg_color="transparent")
-        content_frame.pack(padx=80, pady=60)
+        content_frame.pack(padx=50, pady=35)
 
         # Título con emoji del nivel
         color_nivel = self.obtener_color_nivel(self.nivel)
@@ -414,18 +417,18 @@ class AgilidadMentalApp:
         titulo_label = ctk.CTkLabel(
             content_frame,
             text=f"{emojis_nivel.get(self.nivel, '⭐')} NIVEL {self.nivel} {emojis_nivel.get(self.nivel, '⭐')}",
-            font=("Comic Sans MS", 36, "bold"),
+            font=("Comic Sans MS", 28, "bold"),
             text_color=color_nivel
         )
-        titulo_label.pack(pady=(0, 10))
+        titulo_label.pack(pady=(0, 5))
 
         subtitulo_label = ctk.CTkLabel(
             content_frame,
             text="¡Cuéntanos sobre ti! 😊",
-            font=("Comic Sans MS", 22),
+            font=("Comic Sans MS", 16),
             text_color="#666666"
         )
-        subtitulo_label.pack(pady=(0, 40))
+        subtitulo_label.pack(pady=(0, 20))
 
         # Campo Nombre con diseño infantil
         nombre_container = self._crear_campo_infantil(
@@ -440,45 +443,45 @@ class AgilidadMentalApp:
         curso_label = ctk.CTkLabel(
             content_frame,
             text="📚 ¿En qué curso estás?",
-            font=("Comic Sans MS", 20, "bold"),
+            font=("Comic Sans MS", 16, "bold"),
             text_color=color_nivel,
             anchor="w"
         )
-        curso_label.pack(fill="x", pady=(25, 10))
+        curso_label.pack(fill="x", pady=(10, 6))
 
         self.combo_curso = ctk.CTkComboBox(
             content_frame,
             values=Config.CURSOS,
-            font=("Comic Sans MS", 18),
-            width=500,
-            height=50,
-            corner_radius=15,
+            font=("Comic Sans MS", 15),
+            width=420,
+            height=40,
+            corner_radius=12,
             button_color=color_nivel,
             button_hover_color=self._oscurecer_color(color_nivel),
             dropdown_fg_color="white",
             dropdown_hover_color="#F0F0F0",
             border_color=color_nivel,
-            border_width=3
+            border_width=2
         )
         self.combo_curso.set("👉 Selecciona tu curso")
-        self.combo_curso.pack(pady=(0, 25))
+        self.combo_curso.pack(pady=(0, 10))
 
         # Campo Fecha
         fecha_label = ctk.CTkLabel(
             content_frame,
             text="📅 Fecha de hoy:",
-            font=("Comic Sans MS", 20, "bold"),
+            font=("Comic Sans MS", 16, "bold"),
             text_color=color_nivel,
             anchor="w"
         )
-        fecha_label.pack(fill="x", pady=(25, 10))
+        fecha_label.pack(fill="x", pady=(10, 6))
 
         if TKCALENDAR_AVAILABLE:
             self.entry_fecha = DateEntry(
                 content_frame,
-                font=("Comic Sans MS", 16),
+                font=("Comic Sans MS", 13),
                 width=47,
-                borderwidth=3,
+                borderwidth=2,
                 date_pattern='dd/mm/yyyy',
                 locale='es_ES'
             )
@@ -486,53 +489,67 @@ class AgilidadMentalApp:
         else:
             self.entry_fecha = ctk.CTkEntry(
                 content_frame,
-                font=("Comic Sans MS", 18),
-                width=500,
-                height=50,
-                corner_radius=15,
+                font=("Comic Sans MS", 15),
+                width=420,
+                height=40,
+                corner_radius=12,
                 border_color=color_nivel,
-                border_width=3
+                border_width=2
             )
             self.entry_fecha.insert(0, self.fecha)
 
-        self.entry_fecha.pack(pady=(0, 40))
+        self.entry_fecha.pack(pady=(0, 20))
 
-        # Botón comenzar GRANDE
+        # Botón comenzar
         btn_comenzar = ctk.CTkButton(
             content_frame,
             text="🚀 ¡COMENZAR! 🚀",
-            font=("Comic Sans MS", 28, "bold"),
-            width=400,
-            height=80,
-            corner_radius=40,
+            font=("Comic Sans MS", 20, "bold"),
+            width=300,
+            height=60,
+            corner_radius=30,
             fg_color=color_nivel,
             hover_color=self._oscurecer_color(color_nivel),
             command=self.validar_datos
         )
-        btn_comenzar.pack(pady=(10, 0))
+        btn_comenzar.pack(pady=(5, 0))
+
+        # Botón volver decorativo - Se crea al final para que esté encima
+        volver_btn = ctk.CTkButton(
+            main_frame,
+            text="⬅️ Volver",
+            font=("Comic Sans MS", 14, "bold"),
+            width=120,
+            height=40,
+            corner_radius=20,
+            fg_color=Config.COLOR_AZUL_BRILLANTE,
+            hover_color=self._oscurecer_color(Config.COLOR_AZUL_BRILLANTE),
+            command=self.mostrar_pantalla_inicio
+        )
+        volver_btn.place(x=20, y=20)
 
     def _crear_campo_infantil(self, parent, label_text, placeholder, color):
         """Crea un campo de entrada con diseño infantil"""
         label = ctk.CTkLabel(
             parent,
             text=label_text,
-            font=("Comic Sans MS", 20, "bold"),
+            font=("Comic Sans MS", 16, "bold"),
             text_color=color,
             anchor="w"
         )
-        label.pack(fill="x", pady=(0, 10))
+        label.pack(fill="x", pady=(0, 6))
 
         entry = ctk.CTkEntry(
             parent,
-            font=("Comic Sans MS", 18),
-            width=500,
-            height=50,
-            corner_radius=15,
+            font=("Comic Sans MS", 15),
+            width=420,
+            height=40,
+            corner_radius=12,
             placeholder_text=placeholder,
             border_color=color,
-            border_width=3
+            border_width=2
         )
-        entry.pack(pady=(0, 25))
+        entry.pack(pady=(0, 10))
         return entry
 
     # ==================== PANTALLA DE EJERCICIOS ====================
