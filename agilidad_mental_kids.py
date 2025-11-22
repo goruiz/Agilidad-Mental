@@ -85,7 +85,7 @@ class Config:
         "multiplicación": "Multiplicación",
         "división": "División",
         "potencia": "Potenciación",
-        "raíz": "Radicación"
+        "raiz": "Radicación"
     }
 
     EMOJIS_OPERACIONES = {
@@ -94,7 +94,7 @@ class Config:
         "multiplicación": "✖️",
         "división": "➗",
         "potencia": "🔼",
-        "raíz": "√"
+        "raiz": "✔"
     }
 
     # Cursos
@@ -193,7 +193,7 @@ class AgilidadMentalApp:
 
     def obtener_tabla_minima(self, operacion):
         """Retorna tabla mínima por operación"""
-        return 2 if operacion in ["multiplicación", "división", "potencia", "raíz"] else 1
+        return 2 if operacion in ["multiplicación", "división", "potencia", "raiz"] else 1
 
     def obtener_color_nivel(self, nivel):
         """Retorna color por nivel"""
@@ -1124,129 +1124,113 @@ class AgilidadMentalApp:
         nota, tiempo, pen = self.calcular_nota_final()
 
         main_frame = ctk.CTkFrame(self.root, fg_color="#E3F2FD")
-        main_frame.pack(fill="both", expand=True, padx=30, pady=30)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=15)
 
-        # Scroll frame
+        # Frame con scroll para el contenido
         scroll_frame = ctk.CTkScrollableFrame(
             main_frame,
             fg_color="white",
-            corner_radius=30
+            corner_radius=20
         )
-        scroll_frame.pack(fill="both", expand=True)
+        scroll_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Contenedor para todo el contenido
+        content_frame = ctk.CTkFrame(scroll_frame, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Encabezado con emojis según nota
         if nota >= 90:
-            emoji = "🎉🌟🏆"
-            mensaje = "¡EXCELENTE TRABAJO!"
+            emoji = "🎉🏆"
+            mensaje = "¡EXCELENTE!"
             color_nota = Config.COLOR_VERDE_BRILLANTE
         elif nota >= 70:
-            emoji = "😊👍✨"
+            emoji = "😊👍"
             mensaje = "¡MUY BIEN!"
             color_nota = Config.COLOR_AZUL_BRILLANTE
         else:
-            emoji = "💪📚🎯"
+            emoji = "💪📚"
             mensaje = "¡SIGUE PRACTICANDO!"
             color_nota = Config.COLOR_NARANJA_BRILLANTE
 
-        ctk.CTkLabel(
-            scroll_frame,
-            text=emoji,
-            font=("Segoe UI Emoji", 80)
-        ).pack(pady=(30, 10))
+        # Header compacto
+        header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        header_frame.pack(fill="x", pady=(15, 5))
 
         ctk.CTkLabel(
-            scroll_frame,
-            text=mensaje,
-            font=("Comic Sans MS", 42, "bold"),
+            header_frame,
+            text=f"{emoji} {mensaje}",
+            font=("Comic Sans MS", 28, "bold"),
             text_color=color_nota
         ).pack()
 
         ctk.CTkLabel(
-            scroll_frame,
-            text=f"{self.nombre}",
-            font=("Comic Sans MS", 24, "bold"),
+            header_frame,
+            text=f"{self.nombre} • {self.curso} • {self.fecha}",
+            font=("Comic Sans MS", 13),
             text_color="#666666"
-        ).pack(pady=(10, 5))
+        ).pack(pady=(2, 0))
 
-        ctk.CTkLabel(
-            scroll_frame,
-            text=f"{self.curso} • {self.fecha}",
-            font=("Comic Sans MS", 18),
-            text_color="#888888"
-        ).pack(pady=(0, 30))
-
-        # Nota en frame gigante
+        # Nota en frame compacto - HORIZONTAL
         nota_container = ctk.CTkFrame(
-            scroll_frame,
+            content_frame,
             fg_color=color_nota,
-            corner_radius=30,
-            border_width=8,
+            corner_radius=15,
+            border_width=4,
             border_color=self._oscurecer_color(color_nota)
         )
-        nota_container.pack(padx=60, pady=20)
+        nota_container.pack(padx=40, pady=(5, 8), fill="x")
+
+        nota_inner = ctk.CTkFrame(nota_container, fg_color="transparent")
+        nota_inner.pack(pady=12)
 
         ctk.CTkLabel(
-            nota_container,
-            text="TU NOTA FINAL",
-            font=("Comic Sans MS", 28, "bold"),
+            nota_inner,
+            text="NOTA FINAL: ",
+            font=("Comic Sans MS", 20, "bold"),
             text_color="white"
-        ).pack(pady=(30, 10))
+        ).pack(side="left", padx=(10, 5))
 
         ctk.CTkLabel(
-            nota_container,
+            nota_inner,
             text=f"{nota}",
-            font=("Comic Sans MS", 100, "bold"),
+            font=("Comic Sans MS", 48, "bold"),
             text_color="white"
-        ).pack()
+        ).pack(side="left")
 
         ctk.CTkLabel(
-            nota_container,
-            text="/ 100 puntos",
-            font=("Comic Sans MS", 24),
+            nota_inner,
+            text="/100",
+            font=("Comic Sans MS", 18),
             text_color="white"
-        ).pack(pady=(0, 30))
+        ).pack(side="left", padx=(3, 10))
 
         if pen > 0:
             ctk.CTkLabel(
-                scroll_frame,
-                text=f"⚠️ Penalización por tiempo: -{pen} puntos",
-                font=("Comic Sans MS", 16, "bold"),
+                content_frame,
+                text=f"⚠️ Penalización: -{pen} pts",
+                font=("Comic Sans MS", 12, "bold"),
                 text_color=Config.COLOR_ROJO_BRILLANTE
-            ).pack(pady=10)
+            ).pack(pady=(0, 5))
 
-        # Separador
-        ctk.CTkFrame(
-            scroll_frame,
-            height=4,
-            fg_color=color_nota
-        ).pack(fill="x", pady=30, padx=80)
-
-        # Título detalle
+        # Título detalle compacto
         ctk.CTkLabel(
-            scroll_frame,
-            text="📊 DETALLE DE TUS RESPUESTAS 📊",
-            font=("Comic Sans MS", 28, "bold"),
+            content_frame,
+            text="📊 DETALLE DE RESPUESTAS",
+            font=("Comic Sans MS", 18, "bold"),
             text_color=Config.COLOR_MORADO_BRILLANTE
-        ).pack(pady=20)
+        ).pack(pady=(8, 5))
 
         # Tabla simple de resultados
-        self._crear_tabla_resultados_simple(scroll_frame)
+        self._crear_tabla_resultados_simple(content_frame)
 
-        # Separador
-        ctk.CTkFrame(
-            scroll_frame,
-            height=4,
-            fg_color=color_nota
-        ).pack(fill="x", pady=30, padx=80)
-
-        # Botones finales grandes
-        buttons_frame = ctk.CTkFrame(scroll_frame, fg_color="transparent")
-        buttons_frame.pack(pady=40)
+        # Botones finales compactos
+        buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        buttons_frame.pack(pady=(10, 15))
 
         botones = [
-            ("📝 VER TODAS\nMIS RESPUESTAS", Config.COLOR_AZUL_BRILLANTE, self.mostrar_ventana_respuestas),
-            ("🖨️ IMPRIMIR\nRESULTADOS", Config.COLOR_MORADO_BRILLANTE, self.imprimir_resultados),
-            ("🔄 HACER OTRO\nTEST", Config.COLOR_VERDE_BRILLANTE, self.reiniciar_aplicativo),
+            ("📝 VER\nRESPUESTAS", Config.COLOR_AZUL_BRILLANTE, self.mostrar_ventana_respuestas),
+            ("🖨️ IMPRIMIR", Config.COLOR_MORADO_BRILLANTE, self.imprimir_resultados),
+            ("🔄 OTRO\nTEST", Config.COLOR_VERDE_BRILLANTE, self.reiniciar_aplicativo),
             ("❌ SALIR", Config.COLOR_ROJO_BRILLANTE, self.root.quit)
         ]
 
@@ -1254,39 +1238,39 @@ class AgilidadMentalApp:
             ctk.CTkButton(
                 buttons_frame,
                 text=texto,
-                font=("Comic Sans MS", 18, "bold"),
-                width=200,
-                height=90,
-                corner_radius=20,
+                font=("Comic Sans MS", 14, "bold"),
+                width=140,
+                height=60,
+                corner_radius=15,
                 fg_color=color,
                 hover_color=self._oscurecer_color(color),
                 command=comando
-            ).pack(side="left", padx=15)
+            ).pack(side="left", padx=8)
 
     def _crear_tabla_resultados_simple(self, parent):
         """Tabla de resultados simplificada y colorida"""
         resultados_por_operacion = self._agrupar_resultados_por_operacion()
 
         table_container = ctk.CTkFrame(parent, fg_color="transparent")
-        table_container.pack(padx=60)
+        table_container.pack(padx=30)
 
         # Encabezado
         header_frame = ctk.CTkFrame(
             table_container,
             fg_color=Config.COLOR_MORADO_BRILLANTE,
-            corner_radius=15
+            corner_radius=10
         )
-        header_frame.pack(fill="x", pady=(0, 10))
+        header_frame.pack(fill="x", pady=(0, 4))
 
-        headers = ["Operación", "Hasta Tabla", "✅ Correctas", "❌ Incorrectas"]
+        headers = ["Operación", "Tabla", "✅", "❌"]
         for header in headers:
             ctk.CTkLabel(
                 header_frame,
                 text=header,
-                font=("Comic Sans MS", 18, "bold"),
+                font=("Comic Sans MS", 13, "bold"),
                 text_color="white",
-                width=180
-            ).pack(side="left", padx=15, pady=15, expand=True)
+                width=120
+            ).pack(side="left", padx=8, pady=6, expand=True)
 
         # Filas
         colores_filas = [Config.COLOR_AZUL_BRILLANTE, Config.COLOR_VERDE_BRILLANTE,
@@ -1315,19 +1299,19 @@ class AgilidadMentalApp:
                 row_frame = ctk.CTkFrame(
                     table_container,
                     fg_color=color_fila,
-                    corner_radius=15
+                    corner_radius=10
                 )
-                row_frame.pack(fill="x", pady=5)
+                row_frame.pack(fill="x", pady=2)
 
                 datos = [f"{emoji_op} {nombre_op}", str(tabla_max), str(correctas), str(incorrectas)]
                 for dato in datos:
                     ctk.CTkLabel(
                         row_frame,
                         text=dato,
-                        font=("Comic Sans MS", 16, "bold"),
+                        font=("Comic Sans MS", 12, "bold"),
                         text_color="white",
-                        width=180
-                    ).pack(side="left", padx=15, pady=12, expand=True)
+                        width=120
+                    ).pack(side="left", padx=8, pady=6, expand=True)
 
                 idx += 1
 
@@ -1335,19 +1319,19 @@ class AgilidadMentalApp:
         total_frame = ctk.CTkFrame(
             table_container,
             fg_color=Config.COLOR_AMARILLO_BRILLANTE,
-            corner_radius=15
+            corner_radius=10
         )
-        total_frame.pack(fill="x", pady=(15, 0))
+        total_frame.pack(fill="x", pady=(8, 0))
 
         totales = ["🏆 TOTAL", "", str(total_correctas), str(total_incorrectas)]
         for total in totales:
             ctk.CTkLabel(
                 total_frame,
                 text=total,
-                font=("Comic Sans MS", 18, "bold"),
+                font=("Comic Sans MS", 13, "bold"),
                 text_color="#333333",
-                width=180
-            ).pack(side="left", padx=15, pady=18, expand=True)
+                width=120
+            ).pack(side="left", padx=8, pady=8, expand=True)
 
     # ==================== VENTANA DE RESPUESTAS ====================
     def mostrar_ventana_respuestas(self):
@@ -1537,7 +1521,7 @@ class AgilidadMentalApp:
             self.tiempo_principal = Config.NIVEL_2_TIEMPO_PRINCIPAL
             self.tiempo_maximo = Config.NIVEL_2_TIEMPO_MAXIMO
         else:
-            self.operaciones_nivel = ["suma", "resta", "multiplicación", "división", "potencia", "raíz"]
+            self.operaciones_nivel = ["suma", "resta", "multiplicación", "división", "potencia", "raiz"]
             self.tiempo_principal = Config.NIVEL_3_TIEMPO_PRINCIPAL
             self.tiempo_maximo = Config.NIVEL_3_TIEMPO_MAXIMO
         self.mostrar_pantalla_datos()
@@ -1598,7 +1582,7 @@ class AgilidadMentalApp:
             return {"texto": f"{tabla} × {num} =", "respuesta": tabla * num}
         elif operacion == "potencia":
             return {"texto": f"{tabla}^{num} =", "respuesta": tabla ** num}
-        elif operacion == "raíz":
+        elif operacion == "raiz":
             radicando = num ** tabla
             if tabla == 2:
                 texto = f"√{radicando} ="
