@@ -1200,18 +1200,6 @@ class AgilidadMentalApp:
         main_frame = ctk.CTkFrame(self.root, fg_color="#E3F2FD")
         main_frame.pack(fill="both", expand=True, padx=20, pady=15)
 
-        # Frame con scroll para el contenido
-        scroll_frame = ctk.CTkScrollableFrame(
-            main_frame,
-            fg_color="white",
-            corner_radius=20
-        )
-        scroll_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        # Contenedor para todo el contenido
-        content_frame = ctk.CTkFrame(scroll_frame, fg_color="transparent")
-        content_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
         # Encabezado con emojis según nota
         if nota >= 90:
             emoji = "🎉🏆"
@@ -1225,6 +1213,18 @@ class AgilidadMentalApp:
             emoji = "💪📚"
             mensaje = "¡SIGUE PRACTICANDO!"
             color_nota = Config.COLOR_NARANJA_BRILLANTE
+
+        # Frame con scroll para el contenido
+        scroll_frame = ctk.CTkScrollableFrame(
+            main_frame,
+            fg_color="white",
+            corner_radius=20
+        )
+        scroll_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Contenedor para todo el contenido
+        content_frame = ctk.CTkFrame(scroll_frame, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Header compacto
         header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
@@ -1244,39 +1244,25 @@ class AgilidadMentalApp:
             text_color="#666666"
         ).pack(pady=(2, 0))
 
-        # Nota en frame compacto - HORIZONTAL
-        nota_container = ctk.CTkFrame(
+        # NOTA FINAL - Diseño sutil y agradable
+        nota_frame = ctk.CTkFrame(
             content_frame,
-            fg_color=color_nota,
-            corner_radius=15,
-            border_width=4,
-            border_color=self._oscurecer_color(color_nota)
+            fg_color=self._aclarar_color(color_nota),
+            corner_radius=12,
+            border_width=2,
+            border_color=color_nota
         )
-        nota_container.pack(padx=40, pady=(5, 8), fill="x")
+        nota_frame.pack(pady=(10, 8), padx=60)
 
-        nota_inner = ctk.CTkFrame(nota_container, fg_color="transparent")
-        nota_inner.pack(pady=12)
-
-        ctk.CTkLabel(
-            nota_inner,
-            text="NOTA FINAL: ",
-            font=("Comic Sans MS", 20, "bold"),
-            text_color="white"
-        ).pack(side="left", padx=(10, 5))
+        nota_content = ctk.CTkFrame(nota_frame, fg_color="transparent")
+        nota_content.pack(padx=25, pady=12)
 
         ctk.CTkLabel(
-            nota_inner,
-            text=f"{nota}",
-            font=("Comic Sans MS", 48, "bold"),
-            text_color="white"
-        ).pack(side="left")
-
-        ctk.CTkLabel(
-            nota_inner,
-            text="/100",
-            font=("Comic Sans MS", 18),
-            text_color="white"
-        ).pack(side="left", padx=(3, 10))
+            nota_content,
+            text=f"Calificación Final: {nota}/100",
+            font=("Comic Sans MS", 16, "bold"),
+            text_color=color_nota
+        ).pack()
 
         # Mostrar información de penalización si existe
         if pen > 0:
@@ -1426,14 +1412,20 @@ class AgilidadMentalApp:
 
         ventana = ctk.CTkToplevel(self.root)
         ventana.title("📝 Mis Respuestas")
-        ventana.geometry("1200x800")
+
+        # Ventana más pequeña
+        width, height = 900, 650
 
         # Centrar
         ventana.update_idletasks()
-        width, height = 1200, 800
         x = (ventana.winfo_screenwidth() - width) // 2
         y = (ventana.winfo_screenheight() - height) // 2
         ventana.geometry(f"{width}x{height}+{x}+{y}")
+
+        # IMPORTANTE: Hacer que la ventana aparezca por delante
+        ventana.lift()
+        ventana.attributes('-topmost', True)
+        ventana.after(100, lambda: ventana.attributes('-topmost', False))
 
         # Contenido
         main_frame = ctk.CTkFrame(ventana, fg_color="white")
@@ -1443,16 +1435,16 @@ class AgilidadMentalApp:
         ctk.CTkLabel(
             main_frame,
             text="📝 TODAS MIS RESPUESTAS 📝",
-            font=("Comic Sans MS", 36, "bold"),
+            font=("Comic Sans MS", 28, "bold"),
             text_color=Config.COLOR_MORADO_BRILLANTE
-        ).pack(pady=(20, 10))
+        ).pack(pady=(15, 8))
 
         ctk.CTkLabel(
             main_frame,
             text=f"{self.nombre} • {self.curso} • {self.fecha}",
-            font=("Comic Sans MS", 18),
+            font=("Comic Sans MS", 14),
             text_color="#666666"
-        ).pack(pady=(0, 20))
+        ).pack(pady=(0, 15))
 
         # Scroll con ejercicios
         scroll_frame = ctk.CTkScrollableFrame(main_frame, fg_color="transparent")
@@ -1539,56 +1531,56 @@ class AgilidadMentalApp:
         ctk.CTkLabel(
             content,
             text=f"#{numero}",
-            font=("Comic Sans MS", 16, "bold"),
+            font=("Comic Sans MS", 15, "bold"),
             text_color=color_base,
-            width=50
-        ).pack(side="left")
+            width=40
+        ).pack(side="left", padx=(0, 5))
 
         # Ejercicio
         ctk.CTkLabel(
             content,
             text=ejercicio["ejercicio"],
-            font=("Comic Sans MS", 18),
+            font=("Comic Sans MS", 16),
             text_color="#333333",
-            width=200,
+            width=150,
             anchor="w"
-        ).pack(side="left", padx=10)
+        ).pack(side="left", padx=5)
 
         # Tu respuesta
         resp_usuario = ejercicio["respuesta_usuario"] if ejercicio["respuesta_usuario"] else "(vacío)"
         ctk.CTkLabel(
             content,
             text=f"Tu respuesta: {resp_usuario}",
-            font=("Comic Sans MS", 16),
+            font=("Comic Sans MS", 14),
             text_color="#666666",
-            width=200
-        ).pack(side="left", padx=10)
+            width=140
+        ).pack(side="left", padx=5)
 
         # Respuesta correcta
         ctk.CTkLabel(
             content,
             text=f"Correcta: {ejercicio['respuesta_correcta']}",
-            font=("Comic Sans MS", 16),
+            font=("Comic Sans MS", 14),
             text_color="#666666",
-            width=150
-        ).pack(side="left", padx=10)
+            width=120
+        ).pack(side="left", padx=5)
 
-        # Estado
+        # Estado - Ahora más compacto y mejor distribuido
         if ejercicio["correcto"]:
-            estado_text = "✅ CORRECTO"
+            estado_text = "✅ BIEN"
             estado_color = Config.COLOR_VERDE_BRILLANTE
         else:
-            estado_text = "❌ INCORRECTO"
+            estado_text = "❌ MAL"
             estado_color = Config.COLOR_ROJO_BRILLANTE
 
         estado_label = ctk.CTkLabel(
             content,
             text=estado_text,
-            font=("Comic Sans MS", 16, "bold"),
+            font=("Comic Sans MS", 14, "bold"),
             text_color=estado_color,
-            width=150
+            width=80
         )
-        estado_label.pack(side="left", padx=10)
+        estado_label.pack(side="left", padx=5)
 
     # ==================== FUNCIONES DE LÓGICA ====================
 
@@ -1864,7 +1856,7 @@ class AgilidadMentalApp:
         clave_actual = f"{self.operacion_actual}_tabla{self.tabla_actual}"
 
         if clave_actual not in self.resultados_operacion:
-            if not messagebox.askyesno("⚠️", "¿Pasar sin guardar?"):
+            if not messagebox.askyesno("⚠️", "¿Pasar sin a la siguiente tabla?"):
                 return
             if self.corriendo:
                 self.detener_cronometro()
@@ -1879,38 +1871,174 @@ class AgilidadMentalApp:
             self.mostrar_resumen_operacion_completa()
 
     def mostrar_resumen_operacion_completa(self):
-        """Muestra resumen de operación"""
+        """Muestra resumen de operación con pantalla visual"""
+        self.limpiar_pantalla()
+
+        # Calcular estadísticas de esta operación
         correctas_total = 0
+        incorrectas_total = 0
         tiempo_total_op = 0
         total_preguntas = 0
 
         for clave, r in self.resultados_operacion.items():
             if r["operacion"] == self.operacion_actual:
                 correctas_total += r["correctas"]
+                incorrectas_total += r["incorrectas"]
                 tiempo_total_op += r["tiempo"]
                 total_preguntas += r["total"]
 
         nombre_op = self.obtener_nombre_operacion(self.operacion_actual)
         emoji_op = self.obtener_emoji_operacion(self.operacion_actual)
+        color_operacion = self.obtener_color_operacion(self.operacion_actual)
 
-        mensaje = f"{emoji_op} RESUMEN DE {nombre_op.upper()}\n\n"
-        mensaje += f"Aciertos: {correctas_total}/{total_preguntas}\n"
-        mensaje += f"Tiempo: {int(tiempo_total_op//60):02d}:{int(tiempo_total_op%60):02d}\n\n"
+        # Calcular nota parcial de esta operación
+        nota_operacion = round((correctas_total / total_preguntas) * 100) if total_preguntas > 0 else 0
 
+        # Determinar mensaje según nota
+        if nota_operacion >= 90:
+            mensaje = "¡EXCELENTE!"
+            color_nota = Config.COLOR_VERDE_BRILLANTE
+        elif nota_operacion >= 70:
+            mensaje = "¡MUY BIEN!"
+            color_nota = Config.COLOR_AZUL_BRILLANTE
+        else:
+            mensaje = "¡SIGUE PRACTICANDO!"
+            color_nota = Config.COLOR_NARANJA_BRILLANTE
+
+        # Frame principal
+        main_frame = ctk.CTkFrame(self.root, fg_color="#E3F2FD")
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+        # Contenedor central
+        center_frame = ctk.CTkFrame(
+            main_frame,
+            fg_color="white",
+            corner_radius=20,
+            border_width=4,
+            border_color=color_operacion
+        )
+        center_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        content_frame = ctk.CTkFrame(center_frame, fg_color="transparent")
+        content_frame.pack(padx=50, pady=40)
+
+        # Emoji de la operación
+        ctk.CTkLabel(
+            content_frame,
+            text=emoji_op,
+            font=("Segoe UI Emoji", 60)
+        ).pack(pady=(0, 10))
+
+        # Mensaje motivador
+        ctk.CTkLabel(
+            content_frame,
+            text=mensaje,
+            font=("Comic Sans MS", 32, "bold"),
+            text_color=color_nota
+        ).pack(pady=(0, 5))
+
+        # Nombre de la operación
+        ctk.CTkLabel(
+            content_frame,
+            text=f"{nombre_op} Completada",
+            font=("Comic Sans MS", 20, "bold"),
+            text_color=color_operacion
+        ).pack(pady=(0, 20))
+
+        # Tabla de resultados
+        tabla_frame = ctk.CTkFrame(
+            content_frame,
+            fg_color=self._aclarar_color(color_operacion),
+            corner_radius=15
+        )
+        tabla_frame.pack(fill="x", pady=(0, 20), padx=20)
+
+        # Encabezado
+        header_frame = ctk.CTkFrame(tabla_frame, fg_color="transparent")
+        header_frame.pack(fill="x", padx=15, pady=(15, 5))
+
+        ctk.CTkLabel(
+            header_frame,
+            text="Correctas ✅",
+            font=("Comic Sans MS", 16, "bold"),
+            text_color="white",
+            width=150
+        ).pack(side="left", padx=10)
+
+        ctk.CTkLabel(
+            header_frame,
+            text="Incorrectas ❌",
+            font=("Comic Sans MS", 16, "bold"),
+            text_color="white",
+            width=150
+        ).pack(side="left", padx=10)
+
+        # Valores
+        valores_frame = ctk.CTkFrame(tabla_frame, fg_color="transparent")
+        valores_frame.pack(fill="x", padx=15, pady=(0, 15))
+
+        ctk.CTkLabel(
+            valores_frame,
+            text=str(correctas_total),
+            font=("Comic Sans MS", 36, "bold"),
+            text_color="white",
+            width=150
+        ).pack(side="left", padx=10)
+
+        ctk.CTkLabel(
+            valores_frame,
+            text=str(incorrectas_total),
+            font=("Comic Sans MS", 36, "bold"),
+            text_color="white",
+            width=150
+        ).pack(side="left", padx=10)
+
+        # Tiempo
+        ctk.CTkLabel(
+            content_frame,
+            text=f"⏱️ Tiempo: {int(tiempo_total_op//60):02d}:{int(tiempo_total_op%60):02d}",
+            font=("Comic Sans MS", 18),
+            text_color="#666666"
+        ).pack(pady=(0, 25))
+
+        # Determinar siguiente paso
         idx_actual = self.operaciones_nivel.index(self.operacion_actual)
 
         if idx_actual + 1 < len(self.operaciones_nivel):
             siguiente_op = self.operaciones_nivel[idx_actual + 1]
             nombre_siguiente = self.obtener_nombre_operacion(siguiente_op)
-            mensaje += f"Continuar con {nombre_siguiente}"
-            messagebox.showinfo("✅ Completado", mensaje)
-            self.operacion_actual = siguiente_op
-            self.tabla_actual = self.obtener_tabla_minima(siguiente_op)
-            self.solicitar_limite_tabla_operacion()
+
+            ctk.CTkButton(
+                content_frame,
+                text=f"➡️ Continuar con {nombre_siguiente}",
+                font=("Comic Sans MS", 20, "bold"),
+                width=350,
+                height=65,
+                corner_radius=20,
+                fg_color=Config.COLOR_VERDE_BRILLANTE,
+                hover_color=self._aclarar_color(Config.COLOR_VERDE_BRILLANTE),
+                text_color="white",
+                command=lambda: self._continuar_siguiente_operacion(siguiente_op)
+            ).pack()
         else:
-            mensaje += "¡Completaste todas las operaciones!"
-            messagebox.showinfo("🎉 ¡Terminado!", mensaje)
-            self.mostrar_resultados_finales()
+            ctk.CTkButton(
+                content_frame,
+                text="🎉 Ver Resultados Finales",
+                font=("Comic Sans MS", 20, "bold"),
+                width=350,
+                height=65,
+                corner_radius=20,
+                fg_color=Config.COLOR_VERDE_BRILLANTE,
+                hover_color=self._aclarar_color(Config.COLOR_VERDE_BRILLANTE),
+                text_color="white",
+                command=self.mostrar_resultados_finales
+            ).pack()
+
+    def _continuar_siguiente_operacion(self, siguiente_op):
+        """Continúa con la siguiente operación"""
+        self.operacion_actual = siguiente_op
+        self.tabla_actual = self.obtener_tabla_minima(siguiente_op)
+        self.solicitar_limite_tabla_operacion()
 
     def mostrar_resultados_operacion(self):
         """Muestra resultados parciales"""
