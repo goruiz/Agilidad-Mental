@@ -59,7 +59,7 @@ class Config:
     COLOR_MULTIPLICACION = "#DDA0DD"  # Púrpura suave (Plum)
     COLOR_DIVISION = "#FFB6C1"  # Rosa suave (Light Pink)
     COLOR_POTENCIA = "#B0C4DE"  # Azul grisáceo suave (Light Steel Blue)
-    COLOR_RAIZ = "#F0E68C"  # Amarillo suave (Khaki)
+    COLOR_RAIZ = "#FF8355"  # Amarillo suave (Khaki)
 
     COLOR_SUCCESS = "#4CAF50"
     COLOR_DANGER = "#F44336"
@@ -420,7 +420,8 @@ class AgilidadMentalApp:
             height=70,
             corner_radius=15,
             fg_color=color,
-            hover_color=self._oscurecer_color(color),
+            hover_color=self._aclarar_color(color),
+            text_color="white",
             command=lambda: self.seleccionar_nivel(nivel)
         )
         boton.grid(row=0, column=2, rowspan=2, padx=(10, 5), pady=5)
@@ -562,7 +563,8 @@ class AgilidadMentalApp:
             height=60,
             corner_radius=30,
             fg_color=color_nivel,
-            hover_color=self._oscurecer_color(color_nivel),
+            hover_color=self._aclarar_color(color_nivel),
+            text_color="white",
             command=self.validar_datos
         )
         btn_comenzar.pack(pady=(5, 0))
@@ -576,7 +578,8 @@ class AgilidadMentalApp:
             height=40,
             corner_radius=20,
             fg_color=Config.COLOR_AZUL_BRILLANTE,
-            hover_color=self._oscurecer_color(Config.COLOR_AZUL_BRILLANTE),
+            hover_color=self._aclarar_color(Config.COLOR_AZUL_BRILLANTE),
+            text_color="white",
             command=self.mostrar_pantalla_inicio
         )
         volver_btn.place(x=20, y=20)
@@ -703,7 +706,8 @@ class AgilidadMentalApp:
             height=65,
             corner_radius=20,
             fg_color=Config.COLOR_VERDE_BRILLANTE,
-            hover_color=self._oscurecer_color(Config.COLOR_VERDE_BRILLANTE),
+            hover_color=self._aclarar_color(Config.COLOR_VERDE_BRILLANTE),
+            text_color="white",
             command=self.iniciar_ejercicios_directo
         ).pack()
 
@@ -983,7 +987,7 @@ class AgilidadMentalApp:
             height=70,
             corner_radius=20,
             fg_color=Config.COLOR_ROJO_BRILLANTE,
-            hover_color=self._oscurecer_color(Config.COLOR_ROJO_BRILLANTE),
+            hover_color=self._aclarar_color(Config.COLOR_ROJO_BRILLANTE),
             text_color="white",
             command=self.finalizar_operacion
         )
@@ -998,7 +1002,8 @@ class AgilidadMentalApp:
             height=65,
             corner_radius=20,
             fg_color=color_operacion,
-            hover_color=color_operacion_oscuro,
+            hover_color=self._aclarar_color(color_operacion),
+            text_color="white",
             command=self.mostrar_resultados_operacion
         ).pack(pady=(0, 15))
 
@@ -1012,7 +1017,8 @@ class AgilidadMentalApp:
                 height=65,
                 corner_radius=20,
                 fg_color=color_operacion_oscuro,
-                hover_color=self._oscurecer_color(color_operacion_oscuro),
+                hover_color=self._aclarar_color(color_operacion_oscuro),
+                text_color="white",
                 command=self.siguiente_operacion
             ).pack(pady=(0, 15))
 
@@ -1146,7 +1152,8 @@ class AgilidadMentalApp:
             height=50,
             corner_radius=15,
             fg_color=Config.COLOR_VERDE_BRILLANTE,
-            hover_color=self._oscurecer_color(Config.COLOR_VERDE_BRILLANTE),
+            hover_color=self._aclarar_color(Config.COLOR_VERDE_BRILLANTE),
+            text_color="white",
             command=confirmar
         ).pack(side="left", padx=10)
 
@@ -1158,7 +1165,8 @@ class AgilidadMentalApp:
             height=50,
             corner_radius=15,
             fg_color=Config.COLOR_ROJO_BRILLANTE,
-            hover_color=self._oscurecer_color(Config.COLOR_ROJO_BRILLANTE),
+            hover_color=self._aclarar_color(Config.COLOR_ROJO_BRILLANTE),
+            text_color="white",
             command=cancelar
         ).pack(side="left", padx=10)
 
@@ -1325,7 +1333,8 @@ class AgilidadMentalApp:
                 height=60,
                 corner_radius=15,
                 fg_color=color,
-                hover_color=self._oscurecer_color(color),
+                hover_color=self._aclarar_color(color),
+                text_color="white",
                 command=comando
             ).pack(side="left", padx=8)
 
@@ -1498,7 +1507,8 @@ class AgilidadMentalApp:
             height=60,
             corner_radius=20,
             fg_color=Config.COLOR_AZUL_BRILLANTE,
-            hover_color=self._oscurecer_color(Config.COLOR_AZUL_BRILLANTE),
+            hover_color=self._aclarar_color(Config.COLOR_AZUL_BRILLANTE),
+            text_color="white",
             command=self.imprimir_ejercicios
         ).pack(side="left", padx=15)
 
@@ -1510,7 +1520,8 @@ class AgilidadMentalApp:
             height=60,
             corner_radius=20,
             fg_color=Config.COLOR_ROJO_BRILLANTE,
-            hover_color=self._oscurecer_color(Config.COLOR_ROJO_BRILLANTE),
+            hover_color=self._aclarar_color(Config.COLOR_ROJO_BRILLANTE),
+            text_color="white",
             command=ventana.destroy
         ).pack(side="left", padx=15)
 
