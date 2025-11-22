@@ -275,7 +275,7 @@ class AgilidadMentalApp:
         # Título principal con estilo infantil
         title_label = ctk.CTkLabel(
             header_frame,
-            text="🌟 ¡AGILIDAD MENTAL! 🌟",
+            text="🌟 Agilidad RMmath! 🌟",
             font=("Comic Sans MS", 40, "bold"),
             text_color=Config.COLOR_AZUL_BRILLANTE
         )
@@ -722,13 +722,18 @@ class AgilidadMentalApp:
 
     def iniciar_ejercicios_directo(self):
         """Muestra ejercicios e inicia cronómetro automáticamente"""
-        # Reiniciar variables de tiempo para esta operación
-        self.tiempo_operacion_actual = 0
+        # Solo reiniciar variables de tiempo si es la primera tabla de la operación
+        tabla_minima = self.obtener_tabla_minima(self.operacion_actual)
+        if self.tabla_actual == tabla_minima:
+            # Primera tabla de esta operación, reiniciar tiempo
+            self.tiempo_operacion_actual = 0
+            self.en_tiempo_extra = False
+        # Si no es la primera tabla, mantener tiempo_operacion_actual sin cambios
+
         self.corriendo = False
         self.finalizado = False
-        self.en_tiempo_extra = False
 
-        # Establecer tiempos según el nivel
+        # Establecer tiempos según el nivel (siempre actualizar por si cambiamos de operación)
         if self.nivel == 1:
             self.tiempo_principal_operacion = Config.NIVEL_1_TIEMPO_PRINCIPAL
             self.tiempo_maximo_operacion = Config.NIVEL_1_TIEMPO_MAXIMO
@@ -742,7 +747,7 @@ class AgilidadMentalApp:
 
     def mostrar_pantalla_ejercicios(self):
         """Método legacy que ahora muestra la pantalla de preparación"""
-        self.corriendo = False
+        # NO reiniciar corriendo ni finalizado aquí para preservar el cronómetro
         self.finalizado = False
 
         if self.tabla_actual > self.tabla_max:
@@ -1864,6 +1869,10 @@ class AgilidadMentalApp:
             self._guardar_resultado(correctas, incorrectas)
             self.finalizado = True
 
+        # Detener cronómetro sin reiniciar
+        if self.corriendo:
+            self.detener_cronometro()
+
         if self.tabla_actual < self.tabla_max:
             self.tabla_actual += 1
             self.mostrar_pantalla_ejercicios()
@@ -1877,15 +1886,16 @@ class AgilidadMentalApp:
         # Calcular estadísticas de esta operación
         correctas_total = 0
         incorrectas_total = 0
-        tiempo_total_op = 0
         total_preguntas = 0
 
         for clave, r in self.resultados_operacion.items():
             if r["operacion"] == self.operacion_actual:
                 correctas_total += r["correctas"]
                 incorrectas_total += r["incorrectas"]
-                tiempo_total_op += r["tiempo"]
                 total_preguntas += r["total"]
+
+        # Usar el tiempo acumulado del cronómetro (ya incluye todas las tablas)
+        tiempo_total_op = self.tiempo_operacion_actual
 
         nombre_op = self.obtener_nombre_operacion(self.operacion_actual)
         emoji_op = self.obtener_emoji_operacion(self.operacion_actual)
@@ -2038,6 +2048,9 @@ class AgilidadMentalApp:
         """Continúa con la siguiente operación"""
         self.operacion_actual = siguiente_op
         self.tabla_actual = self.obtener_tabla_minima(siguiente_op)
+        # Reiniciar tiempo para la nueva operación
+        self.tiempo_operacion_actual = 0
+        self.en_tiempo_extra = False
         self.solicitar_limite_tabla_operacion()
 
     def mostrar_resultados_operacion(self):
