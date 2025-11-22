@@ -381,6 +381,16 @@ class AgilidadMentalApp:
         r, g, b = int(r * 0.7), int(g * 0.7), int(b * 0.7)
         return f'#{r:02x}{g:02x}{b:02x}'
 
+    def _aclarar_color(self, color_hex):
+        """Aclara un color"""
+        color_hex = color_hex.lstrip('#')
+        r, g, b = tuple(int(color_hex[i:i+2], 16) for i in (0, 2, 4))
+        # Mezcla con blanco para aclarar
+        r = int(r + (255 - r) * 0.5)
+        g = int(g + (255 - g) * 0.5)
+        b = int(b + (255 - b) * 0.5)
+        return f'#{r:02x}{g:02x}{b:02x}'
+
     # ==================== PANTALLA DE DATOS ====================
     def mostrar_pantalla_datos(self):
         """Formulario de datos super amigable"""
@@ -576,23 +586,27 @@ class AgilidadMentalApp:
         self._crear_panel_controles_divertido(main_frame)
 
     def _crear_panel_ejercicios_colorido(self, parent):
-        """Panel de ejercicios con diseño colorido"""
+        """Panel de ejercicios con diseño basado en nivel"""
+        # Color principal según nivel
+        color_nivel = self.obtener_color_nivel(self.nivel)
+        color_nivel_claro = self._aclarar_color(color_nivel)
+
         ejercicios_frame = ctk.CTkFrame(
             parent,
             fg_color="white",
             corner_radius=25,
             border_width=5,
-            border_color=Config.COLOR_MORADO_BRILLANTE
+            border_color=color_nivel
         )
         ejercicios_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 15))
 
-        # Encabezado colorido
+        # Encabezado con color del nivel
         nombre_op = self.obtener_nombre_operacion(self.operacion_actual)
         emoji_op = self.obtener_emoji_operacion(self.operacion_actual)
 
         header = ctk.CTkFrame(
             ejercicios_frame,
-            fg_color=Config.COLOR_MORADO_BRILLANTE,
+            fg_color=color_nivel,
             corner_radius=20,
             height=100
         )
@@ -612,13 +626,12 @@ class AgilidadMentalApp:
         )
         scroll_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
 
-        # Crear ejercicios
+        # Crear ejercicios con dos colores alternados del nivel
         self.entries = {}
-        colores_alternados = [Config.COLOR_AZUL_BRILLANTE, Config.COLOR_VERDE_BRILLANTE,
-                             Config.COLOR_NARANJA_BRILLANTE, Config.COLOR_ROSA_BRILLANTE]
+        colores_alternados = [color_nivel, color_nivel_claro]
 
         for i, ej in enumerate(self.ejercicios):
-            color_ej = colores_alternados[i % len(colores_alternados)]
+            color_ej = colores_alternados[i % 2]
             self._crear_ejercicio_colorido(scroll_frame, ej, i, color_ej)
 
     def _crear_ejercicio_colorido(self, parent, ejercicio, index, color):
@@ -699,17 +712,21 @@ class AgilidadMentalApp:
               bg=bg_color, fg="white").pack(side="left")
 
     def _crear_panel_controles_divertido(self, parent):
-        """Panel de controles con diseño divertido"""
+        """Panel de controles con diseño basado en nivel"""
+        # Colores según nivel
+        color_nivel = self.obtener_color_nivel(self.nivel)
+        color_nivel_oscuro = self._oscurecer_color(color_nivel)
+
         controles_frame = ctk.CTkFrame(parent, fg_color="transparent")
         controles_frame.grid(row=0, column=1, sticky="nsew", padx=(15, 0))
 
-        # Cronómetro grande y llamativo
+        # Cronómetro con color del nivel
         cronometro_frame = ctk.CTkFrame(
             controles_frame,
-            fg_color=Config.COLOR_ROJO_BRILLANTE,
+            fg_color=color_nivel,
             corner_radius=20,
             border_width=5,
-            border_color=Config.COLOR_AMARILLO_BRILLANTE
+            border_color=color_nivel_oscuro
         )
         cronometro_frame.pack(fill="x", pady=(0, 20))
 
@@ -731,10 +748,11 @@ class AgilidadMentalApp:
         )
         self.label_tiempo.pack(pady=(0, 20))
 
-        # Info estudiante
+        # Info estudiante con color del nivel (aclarado)
+        color_nivel_claro = self._aclarar_color(color_nivel)
         info_frame = ctk.CTkFrame(
             controles_frame,
-            fg_color=Config.COLOR_CYAN_BRILLANTE,
+            fg_color=color_nivel_claro,
             corner_radius=20
         )
         info_frame.pack(fill="x", pady=(0, 20))
@@ -759,7 +777,7 @@ class AgilidadMentalApp:
             text_color="white"
         ).pack(pady=(0, 15))
 
-        # Botones grandes y coloridos
+        # Botones con colores consistentes
         self.boton_iniciar = ctk.CTkButton(
             controles_frame,
             text="▶️ INICIAR",
@@ -795,8 +813,8 @@ class AgilidadMentalApp:
             width=220,
             height=70,
             corner_radius=20,
-            fg_color=Config.COLOR_AZUL_BRILLANTE,
-            hover_color=self._oscurecer_color(Config.COLOR_AZUL_BRILLANTE),
+            fg_color=color_nivel,
+            hover_color=color_nivel_oscuro,
             command=self.mostrar_resultados_operacion
         ).pack(pady=(0, 15))
 
@@ -809,8 +827,8 @@ class AgilidadMentalApp:
                 width=220,
                 height=70,
                 corner_radius=20,
-                fg_color=Config.COLOR_MORADO_BRILLANTE,
-                hover_color=self._oscurecer_color(Config.COLOR_MORADO_BRILLANTE),
+                fg_color=color_nivel_oscuro,
+                hover_color=self._oscurecer_color(color_nivel_oscuro),
                 command=self.siguiente_operacion
             ).pack(pady=(0, 15))
 
