@@ -83,8 +83,8 @@ class Config:
     # Ejercicios y penalización
     EJERCICIOS_POR_TABLA = 13
     MAX_INTENTOS_GENERACION = 1000
-    PENALIZACION_POR_MINUTO = 2
-    PENALIZACION_MAXIMA = 35
+    PENALIZACION_POR_MINUTO = 1  # 1 punto por cada minuto extra
+    PENALIZACION_MAXIMA = 3  # Máximo 3 puntos (3 minutos extra)
 
     # Operaciones
     NOMBRES_OPERACIONES = {
@@ -161,11 +161,12 @@ class AgilidadMentalApp:
         self.tabla_actual = 1
         self.limites_tablas = {}
         self.tiempo_inicio = None
-        self.tiempo_total = 0
-        self.tiempo_principal = 0
-        self.tiempo_maximo = 0
+        self.tiempo_operacion_actual = 0  # Tiempo de la operación actual
+        self.tiempo_principal_operacion = 0  # Tiempo principal por operación (12 o 10 min)
+        self.tiempo_maximo_operacion = 0  # Tiempo máximo por operación (15 o 12 min)
         self.corriendo = False
         self.finalizado = False
+        self.test_finalizado_automaticamente = False  # Nuevo: para saber si finalizó por tiempo
         self.resultados_operacion = {}
         self.operaciones_nivel = []
         self.operacion_actual = ""
@@ -175,6 +176,8 @@ class AgilidadMentalApp:
         self.boton_finalizar = None
         self.boton_iniciar = None
         self.label_tiempo = None
+        self.cronometro_frame = None  # Nuevo: para cambiar el color del cronómetro
+        self.en_tiempo_extra = False  # Nuevo: para saber si está en tiempo extra
 
     def validar_numero(self, valor):
         """Valida entrada numérica"""
@@ -715,6 +718,20 @@ class AgilidadMentalApp:
 
     def iniciar_ejercicios_directo(self):
         """Muestra ejercicios e inicia cronómetro automáticamente"""
+        # Reiniciar variables de tiempo para esta operación
+        self.tiempo_operacion_actual = 0
+        self.corriendo = False
+        self.finalizado = False
+        self.en_tiempo_extra = False
+
+        # Establecer tiempos según el nivel
+        if self.nivel == 1:
+            self.tiempo_principal_operacion = Config.NIVEL_1_TIEMPO_PRINCIPAL
+            self.tiempo_maximo_operacion = Config.NIVEL_1_TIEMPO_MAXIMO
+        else:  # Nivel 2 y 3
+            self.tiempo_principal_operacion = Config.NIVEL_2_TIEMPO_PRINCIPAL
+            self.tiempo_maximo_operacion = Config.NIVEL_2_TIEMPO_MAXIMO
+
         self._mostrar_ejercicios_y_cronometro()
         # Iniciar cronómetro automáticamente después de un breve delay
         self.root.after(100, self.iniciar_cronometro)
@@ -900,27 +917,28 @@ class AgilidadMentalApp:
         controles_frame.grid(row=0, column=1, sticky="nsew", padx=(15, 0))
 
         # Cronómetro con color de la operación
-        cronometro_frame = ctk.CTkFrame(
+        self.cronometro_frame = ctk.CTkFrame(
             controles_frame,
             fg_color=color_operacion,
             corner_radius=20,
             border_width=5,
             border_color=color_operacion_oscuro
         )
-        cronometro_frame.pack(fill="x", pady=(0, 20))
+        self.cronometro_frame.pack(fill="x", pady=(0, 20))
 
-        ctk.CTkLabel(
-            cronometro_frame,
+        self.label_tiempo_titulo = ctk.CTkLabel(
+            self.cronometro_frame,
             text="⏱️ TIEMPO ⏱️",
             font=("Comic Sans MS", 20, "bold"),
             text_color="white"
-        ).pack(pady=(20, 10))
+        )
+        self.label_tiempo_titulo.pack(pady=(20, 10))
 
-        mins = int(self.tiempo_total // 60)
-        secs = int(self.tiempo_total % 60)
+        mins = int(self.tiempo_operacion_actual // 60)
+        secs = int(self.tiempo_operacion_actual % 60)
 
         self.label_tiempo = ctk.CTkLabel(
-            cronometro_frame,
+            self.cronometro_frame,
             text=f"{mins:02d}:{secs:02d}",
             font=("Comic Sans MS", 56, "bold"),
             text_color="white"
@@ -1252,13 +1270,29 @@ class AgilidadMentalApp:
             text_color="white"
         ).pack(side="left", padx=(3, 10))
 
+        # Mostrar información de penalización si existe
         if pen > 0:
-            ctk.CTkLabel(
+            # Mostrar penalización detallada
+            pen_frame = ctk.CTkFrame(
                 content_frame,
-                text=f"⚠️ Penalización: -{pen} pts",
-                font=("Comic Sans MS", 12, "bold"),
+                fg_color=self._aclarar_color(Config.COLOR_ROJO_BRILLANTE),
+                corner_radius=12
+            )
+            pen_frame.pack(pady=(5, 8), padx=40, fill="x")
+
+            ctk.CTkLabel(
+                pen_frame,
+                text=f"⚠️ Penalización por Tiempo Extra",
+                font=("Comic Sans MS", 14, "bold"),
                 text_color=Config.COLOR_ROJO_BRILLANTE
-            ).pack(pady=(0, 5))
+            ).pack(pady=(8, 2))
+
+            ctk.CTkLabel(
+                pen_frame,
+                text=f"Penalización total aplicada: -{pen} punto(s)",
+                font=("Comic Sans MS", 13),
+                text_color=Config.COLOR_ROJO_BRILLANTE
+            ).pack(pady=(0, 8))
 
         # Título detalle compacto
         ctk.CTkLabel(
@@ -1552,16 +1586,10 @@ class AgilidadMentalApp:
         self.nivel = nivel
         if nivel == 1:
             self.operaciones_nivel = ["suma", "resta"]
-            self.tiempo_principal = Config.NIVEL_1_TIEMPO_PRINCIPAL
-            self.tiempo_maximo = Config.NIVEL_1_TIEMPO_MAXIMO
         elif nivel == 2:
             self.operaciones_nivel = ["suma", "resta", "multiplicación", "división"]
-            self.tiempo_principal = Config.NIVEL_2_TIEMPO_PRINCIPAL
-            self.tiempo_maximo = Config.NIVEL_2_TIEMPO_MAXIMO
         else:
             self.operaciones_nivel = ["suma", "resta", "multiplicación", "división", "potencia", "raiz"]
-            self.tiempo_principal = Config.NIVEL_3_TIEMPO_PRINCIPAL
-            self.tiempo_maximo = Config.NIVEL_3_TIEMPO_MAXIMO
         self.mostrar_pantalla_datos()
 
     def validar_datos(self):
@@ -1638,7 +1666,7 @@ class AgilidadMentalApp:
             return
 
         if not self.corriendo:
-            self.tiempo_inicio = datetime.now() - timedelta(seconds=self.tiempo_total)
+            self.tiempo_inicio = datetime.now() - timedelta(seconds=self.tiempo_operacion_actual)
             self.corriendo = True
 
             # Habilitar entries para escribir
@@ -1653,7 +1681,7 @@ class AgilidadMentalApp:
     def detener_cronometro(self):
         """Detiene cronómetro"""
         if self.corriendo:
-            self.tiempo_total = (datetime.now() - self.tiempo_inicio).total_seconds()
+            self.tiempo_operacion_actual = (datetime.now() - self.tiempo_inicio).total_seconds()
             self.corriendo = False
 
     def actualizar_cronometro(self):
@@ -1665,14 +1693,77 @@ class AgilidadMentalApp:
         mins = int(elapsed // 60)
         secs = int(elapsed % 60)
 
-        if elapsed > self.tiempo_maximo:
-            self.label_tiempo.configure(text=f"{mins:02d}:{secs:02d}", text_color="white")
+        # Actualizar texto del cronómetro
+        self.label_tiempo.configure(text=f"{mins:02d}:{secs:02d}")
+
+        # REGLA: Si pasa del tiempo principal, cambiar a tiempo extra
+        if elapsed > self.tiempo_principal_operacion and not self.en_tiempo_extra:
+            self.en_tiempo_extra = True
+            # Cambiar el color del cronómetro a rojo/naranja brillante
+            if self.cronometro_frame:
+                self.cronometro_frame.configure(
+                    fg_color=Config.COLOR_ROJO_BRILLANTE,
+                    border_color=self._oscurecer_color(Config.COLOR_ROJO_BRILLANTE)
+                )
+            if self.label_tiempo_titulo:
+                self.label_tiempo_titulo.configure(text="⚠️ TIEMPO EXTRA ⚠️")
+
+            # Mostrar mensaje amigable
+            messagebox.showinfo(
+                "⏰ Tiempo Extra",
+                f"¡Ya pasaron {int(self.tiempo_principal_operacion//60)} minutos!\n\n"
+                f"Tienes {int((self.tiempo_maximo_operacion - self.tiempo_principal_operacion)//60)} minutos más para terminar.\n\n"
+                f"⚠️ Se restará 1 punto por cada minuto extra.\n\n"
+                f"¡Apúrate! 💪"
+            )
+
+        # REGLA: Si llega al tiempo máximo, finalizar automáticamente esta operación
+        if elapsed >= self.tiempo_maximo_operacion:
             self.detener_cronometro()
-            messagebox.showwarning("⏰", f"Tiempo máximo agotado: {int(self.tiempo_maximo//60)} minutos")
-            self.finalizar_operacion()
+            self.test_finalizado_automaticamente = True
+            messagebox.showwarning(
+                "⏰ Tiempo Agotado",
+                f"¡Se acabó el tiempo para esta operación!\n\n"
+                f"La operación finalizará automáticamente.\n\n"
+                f"Has llegado al límite de {int(self.tiempo_maximo_operacion//60)} minutos."
+            )
+            self.finalizar_operacion_automatica()
         else:
-            self.label_tiempo.configure(text=f"{mins:02d}:{secs:02d}")
             self.root.after(1000, self.actualizar_cronometro)
+
+    def finalizar_operacion_automatica(self):
+        """Finaliza la operación actual automáticamente cuando se acaba el tiempo"""
+        # Detener cronómetro si está corriendo
+        if self.corriendo:
+            self.detener_cronometro()
+
+        # Evaluar y guardar la operación actual
+        if self.ejercicios and not self.finalizado:
+            correctas, incorrectas = self._evaluar_respuestas()
+            # Deshabilitar entries
+            for entry in self.entries.values():
+                entry.configure(state="disabled")
+            # Deshabilitar botón finalizar
+            if self.boton_finalizar:
+                self.boton_finalizar.configure(state="disabled", fg_color="#CCCCCC", text_color="#666666")
+            self.finalizado = True
+            self._guardar_resultado(correctas, incorrectas)
+
+        # Verificar si hay más operaciones/tablas pendientes
+        idx_actual = self.operaciones_nivel.index(self.operacion_actual)
+        es_ultima_operacion = (idx_actual == len(self.operaciones_nivel) - 1)
+        es_ultima_tabla = (self.tabla_actual == self.tabla_max)
+
+        if es_ultima_tabla and es_ultima_operacion:
+            # Era la última operación, mostrar resultados finales
+            self.mostrar_resultados_finales()
+        elif es_ultima_tabla:
+            # Terminar con esta operación y continuar con la siguiente
+            self.mostrar_resumen_operacion_completa()
+        else:
+            # Continuar con la siguiente tabla
+            self.tabla_actual += 1
+            self.mostrar_pantalla_ejercicios()
 
     def finalizar_operacion(self):
         """Finaliza operación actual"""
@@ -1680,7 +1771,7 @@ class AgilidadMentalApp:
             messagebox.showinfo("⚠️", "Ya finalizado")
             return
 
-        if self.tiempo_total == 0 and not self.corriendo:
+        if self.tiempo_operacion_actual == 0 and not self.corriendo:
             messagebox.showwarning("⚠️", "El cronómetro aún no ha iniciado")
             return
 
@@ -1707,7 +1798,7 @@ class AgilidadMentalApp:
             f"{emoji} ¡Completado!",
             f"{nombre_op} - Tabla {self.tabla_actual}\n\n"
             f"Aciertos: {correctas}/{total}\n"
-            f"Tiempo: {int(self.tiempo_total//60):02d}:{int(self.tiempo_total%60):02d}"
+            f"Tiempo: {int(self.tiempo_operacion_actual//60):02d}:{int(self.tiempo_operacion_actual%60):02d}"
         )
 
         idx_actual = self.operaciones_nivel.index(self.operacion_actual)
@@ -1743,7 +1834,7 @@ class AgilidadMentalApp:
             "correctas": correctas,
             "incorrectas": incorrectas,
             "total": len(self.ejercicios),
-            "tiempo": self.tiempo_total
+            "tiempo": self.tiempo_operacion_actual
         }
 
         for ej in self.ejercicios:
@@ -1832,20 +1923,38 @@ class AgilidadMentalApp:
         messagebox.showinfo("📊 Resultados", texto)
 
     def calcular_nota_final(self):
-        """Calcula nota final"""
+        """Calcula nota final con penalización por tiempo extra en cada operación"""
         total_aciertos = sum(r["correctas"] for r in self.resultados_operacion.values())
         total_preguntas = sum(r["total"] for r in self.resultados_operacion.values())
-        nota = (total_aciertos / total_preguntas) * 100 if total_preguntas > 0 else 0
+        nota_base = (total_aciertos / total_preguntas) * 100 if total_preguntas > 0 else 0
 
+        # Calcular penalización por cada operación que haya excedido el tiempo principal
         penalizacion_total = 0
-        for clave, r in self.resultados_operacion.items():
-            if r["tiempo"] > self.tiempo_principal:
-                exceso = r["tiempo"] - self.tiempo_principal
-                pen = min((exceso / 60) * Config.PENALIZACION_POR_MINUTO, Config.PENALIZACION_MAXIMA)
-                penalizacion_total += pen
 
-        nota_final = max(round(nota - penalizacion_total, 1), 0)
+        # Determinar tiempo principal según el nivel
+        if self.nivel == 1:
+            tiempo_principal = Config.NIVEL_1_TIEMPO_PRINCIPAL
+        else:  # Nivel 2 y 3
+            tiempo_principal = Config.NIVEL_2_TIEMPO_PRINCIPAL
+
+        # Calcular penalización por cada operación/tabla
+        for r in self.resultados_operacion.values():
+            tiempo_operacion = r["tiempo"]
+
+            if tiempo_operacion > tiempo_principal:
+                # Tiempo extra en segundos
+                tiempo_extra = tiempo_operacion - tiempo_principal
+                # Convertir a minutos (redondeando hacia arriba)
+                minutos_extra = int(tiempo_extra / 60)
+                if tiempo_extra % 60 > 0:
+                    minutos_extra += 1
+
+                # Penalización: 1 punto por minuto extra, máximo 3 puntos por operación
+                penalizacion_operacion = min(minutos_extra * Config.PENALIZACION_POR_MINUTO, Config.PENALIZACION_MAXIMA)
+                penalizacion_total += penalizacion_operacion
+
         tiempo_total = sum(r["tiempo"] for r in self.resultados_operacion.values())
+        nota_final = max(round(nota_base - penalizacion_total, 1), 0)
         return nota_final, tiempo_total, round(penalizacion_total, 1)
 
     def _agrupar_resultados_por_operacion(self):
