@@ -554,10 +554,125 @@ class AgilidadMentalApp:
         entry.pack(pady=(0, 10))
         return entry
 
-    # ==================== PANTALLA DE EJERCICIOS ====================
-    def mostrar_pantalla_ejercicios(self):
-        """Pantalla de ejercicios colorida y divertida"""
+    # ==================== PANTALLA DE PREPARACIÓN ====================
+    def mostrar_pantalla_preparacion(self):
+        """Pantalla de preparación antes de mostrar ejercicios"""
         self.limpiar_pantalla()
+
+        color_nivel = self.obtener_color_nivel(self.nivel)
+        nombre_op = self.obtener_nombre_operacion(self.operacion_actual)
+        emoji_op = self.obtener_emoji_operacion(self.operacion_actual)
+
+        # Calcular número real de ejercicios
+        num_ejercicios = self._calcular_num_ejercicios(self.operacion_actual, self.tabla_actual)
+
+        # Frame principal
+        main_frame = ctk.CTkFrame(self.root, fg_color="#E3F2FD")
+        main_frame.pack(fill="both", expand=True)
+
+        # Contenedor central - MÁS COMPACTO
+        center_frame = ctk.CTkFrame(
+            main_frame,
+            fg_color="white",
+            corner_radius=25,
+            border_width=4,
+            border_color=color_nivel
+        )
+        center_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        content_frame = ctk.CTkFrame(center_frame, fg_color="transparent")
+        content_frame.pack(padx=40, pady=35)
+
+        # Emoji más pequeño
+        ctk.CTkLabel(
+            content_frame,
+            text=emoji_op,
+            font=("Segoe UI Emoji", 60)
+        ).pack(pady=(0, 10))
+
+        # Título más pequeño
+        ctk.CTkLabel(
+            content_frame,
+            text="¡PREPÁRATE!",
+            font=("Comic Sans MS", 32, "bold"),
+            text_color=color_nivel
+        ).pack(pady=(0, 8))
+
+        # Información más compacta
+        ctk.CTkLabel(
+            content_frame,
+            text=f"{nombre_op} - Tabla del {self.tabla_actual}",
+            font=("Comic Sans MS", 22, "bold"),
+            text_color="#333333"
+        ).pack(pady=(0, 15))
+
+        # Instrucciones más compactas
+        instrucciones_frame = ctk.CTkFrame(
+            content_frame,
+            fg_color=self._aclarar_color(color_nivel),
+            corner_radius=15
+        )
+        instrucciones_frame.pack(fill="x", pady=(0, 18), padx=15)
+
+        ctk.CTkLabel(
+            instrucciones_frame,
+            text=f"📝 {num_ejercicios} ejercicios",
+            font=("Comic Sans MS", 16),
+            text_color="#333333"
+        ).pack(pady=6)
+
+        ctk.CTkLabel(
+            instrucciones_frame,
+            text="⏱️ El cronómetro iniciará automáticamente",
+            font=("Comic Sans MS", 16),
+            text_color="#333333"
+        ).pack(pady=6)
+
+        ctk.CTkLabel(
+            instrucciones_frame,
+            text="✍️ Completa todos los ejercicios",
+            font=("Comic Sans MS", 16),
+            text_color="#333333"
+        ).pack(pady=6)
+
+        # Mensaje motivador más pequeño
+        ctk.CTkLabel(
+            content_frame,
+            text="¡Confía en ti! ¡Tú puedes! 💪",
+            font=("Comic Sans MS", 15, "bold", "italic"),
+            text_color=color_nivel
+        ).pack(pady=(8, 18))
+
+        # Botón más compacto
+        ctk.CTkButton(
+            content_frame,
+            text="▶️ ¡COMENZAR AHORA!",
+            font=("Comic Sans MS", 22, "bold"),
+            width=300,
+            height=65,
+            corner_radius=20,
+            fg_color=Config.COLOR_VERDE_BRILLANTE,
+            hover_color=self._oscurecer_color(Config.COLOR_VERDE_BRILLANTE),
+            command=self.iniciar_ejercicios_directo
+        ).pack()
+
+    def _calcular_num_ejercicios(self, operacion, tabla):
+        """Calcula el número real de ejercicios según la operación y tabla"""
+        if operacion == "resta":
+            # En resta solo se generan ejercicios desde 0 hasta la tabla
+            return tabla + 1  # +1 porque incluye el 0
+        else:
+            # Para las demás operaciones son 13 ejercicios (0 a 12)
+            return 13
+
+    def iniciar_ejercicios_directo(self):
+        """Muestra ejercicios e inicia cronómetro automáticamente"""
+        self._mostrar_ejercicios_y_cronometro()
+        # Iniciar cronómetro automáticamente después de un breve delay
+        self.root.after(100, self.iniciar_cronometro)
+
+    def mostrar_pantalla_ejercicios(self):
+        """Método legacy que ahora muestra la pantalla de preparación"""
         self.corriendo = False
         self.finalizado = False
 
@@ -570,6 +685,14 @@ class AgilidadMentalApp:
             self.tabla_actual = self.obtener_tabla_minima(self.operacion_actual)
 
         self.ejercicios = self.generar_ejercicios(self.operacion_actual)
+        self.mostrar_pantalla_preparacion()
+
+    # ==================== PANTALLA DE EJERCICIOS ====================
+    def _mostrar_ejercicios_y_cronometro(self):
+        """Pantalla de ejercicios colorida y divertida"""
+        self.limpiar_pantalla()
+        self.corriendo = False
+        self.finalizado = False
 
         # Frame principal
         main_frame = ctk.CTkFrame(self.root, fg_color="#E3F2FD")
@@ -697,6 +820,14 @@ class AgilidadMentalApp:
         if isinstance(bg_color, tuple):
             bg_color = bg_color[1]
 
+        # Si bg_color es "transparent" o None, usar el color del padre
+        if bg_color in ("transparent", None, ""):
+            # Obtener el color del frame padre (ej_frame)
+            parent_of_parent = parent.master
+            bg_color = parent_of_parent.cget("fg_color")
+            if isinstance(bg_color, tuple):
+                bg_color = bg_color[1]
+
         op_frame = Frame(parent, bg=bg_color)
         op_frame.pack(side="left", padx=(0, 20))
 
@@ -777,20 +908,7 @@ class AgilidadMentalApp:
             text_color="white"
         ).pack(pady=(0, 15))
 
-        # Botones con colores consistentes
-        self.boton_iniciar = ctk.CTkButton(
-            controles_frame,
-            text="▶️ INICIAR",
-            font=("Comic Sans MS", 22, "bold"),
-            width=220,
-            height=70,
-            corner_radius=20,
-            fg_color=Config.COLOR_VERDE_BRILLANTE,
-            hover_color=self._oscurecer_color(Config.COLOR_VERDE_BRILLANTE),
-            command=self.iniciar_cronometro
-        )
-        self.boton_iniciar.pack(pady=(0, 15))
-
+        # Botón Finalizar
         self.boton_finalizar = ctk.CTkButton(
             controles_frame,
             text="⏹️ FINALIZAR",
@@ -798,20 +916,20 @@ class AgilidadMentalApp:
             width=220,
             height=70,
             corner_radius=20,
-            fg_color="#CCCCCC",
-            hover_color="#BBBBBB",
-            text_color="#666666",
-            command=self.finalizar_operacion,
-            state="disabled"
+            fg_color=Config.COLOR_ROJO_BRILLANTE,
+            hover_color=self._oscurecer_color(Config.COLOR_ROJO_BRILLANTE),
+            text_color="white",
+            command=self.finalizar_operacion
         )
         self.boton_finalizar.pack(pady=(0, 15))
 
+        # Botón Ver Resultados - con mejor tamaño y espaciado
         ctk.CTkButton(
             controles_frame,
-            text="📊 VER\nRESULTADOS",
-            font=("Comic Sans MS", 18, "bold"),
+            text="📊 VER RESULTADOS",
+            font=("Comic Sans MS", 16, "bold"),
             width=220,
-            height=70,
+            height=65,
             corner_radius=20,
             fg_color=color_nivel,
             hover_color=color_nivel_oscuro,
@@ -819,18 +937,21 @@ class AgilidadMentalApp:
         ).pack(pady=(0, 15))
 
         if self._debe_mostrar_boton_siguiente():
-            texto = "SIGUIENTE\nTABLA" if self.tabla_actual < self.tabla_max else "SIGUIENTE\nOPERACIÓN"
+            texto = "➡️ SIGUIENTE TABLA" if self.tabla_actual < self.tabla_max else "➡️ SIGUIENTE OPERACIÓN"
             ctk.CTkButton(
                 controles_frame,
-                text=f"➡️ {texto}",
-                font=("Comic Sans MS", 18, "bold"),
+                text=texto,
+                font=("Comic Sans MS", 15, "bold"),
                 width=220,
-                height=70,
+                height=65,
                 corner_radius=20,
                 fg_color=color_nivel_oscuro,
                 hover_color=self._oscurecer_color(color_nivel_oscuro),
                 command=self.siguiente_operacion
             ).pack(pady=(0, 15))
+
+        # Guardamos la referencia del botón iniciar como None ya que no existe
+        self.boton_iniciar = None
 
     def _debe_mostrar_boton_siguiente(self):
         """Verifica si mostrar botón siguiente"""
@@ -1498,19 +1619,12 @@ class AgilidadMentalApp:
             self.tiempo_inicio = datetime.now() - timedelta(seconds=self.tiempo_total)
             self.corriendo = True
 
+            # Habilitar entries para escribir
             for entry in self.entries.values():
                 entry.configure(state="normal")
 
-            if self.boton_iniciar:
-                self.boton_iniciar.configure(state="disabled", fg_color="#CCCCCC")
-
-            if self.boton_finalizar:
-                self.boton_finalizar.configure(
-                    state="normal",
-                    fg_color=Config.COLOR_ROJO_BRILLANTE,
-                    hover_color=self._oscurecer_color(Config.COLOR_ROJO_BRILLANTE),
-                    text_color="white"
-                )
+            # El botón finalizar ya está habilitado desde el inicio
+            # No necesitamos cambiar su estado
 
             self.actualizar_cronometro()
 
@@ -1545,18 +1659,19 @@ class AgilidadMentalApp:
             return
 
         if self.tiempo_total == 0 and not self.corriendo:
-            messagebox.showwarning("⚠️", "Primero debes presionar INICIAR")
+            messagebox.showwarning("⚠️", "El cronómetro aún no ha iniciado")
             return
 
         self.detener_cronometro()
         correctas, incorrectas = self._evaluar_respuestas()
 
+        # Deshabilitar entries
         for entry in self.entries.values():
             entry.configure(state="disabled")
+
+        # Deshabilitar botón finalizar
         if self.boton_finalizar:
-            self.boton_finalizar.configure(state="disabled")
-        if self.boton_iniciar:
-            self.boton_iniciar.configure(state="disabled")
+            self.boton_finalizar.configure(state="disabled", fg_color="#CCCCCC", text_color="#666666")
 
         self.finalizado = True
         self._guardar_resultado(correctas, incorrectas)
