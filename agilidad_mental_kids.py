@@ -838,7 +838,7 @@ class AgilidadMentalApp:
         ej_frame.pack(fill="x", pady=8, padx=10)
 
         content_frame = ctk.CTkFrame(ej_frame, fg_color="transparent")
-        content_frame.pack(fill="both", expand=True, padx=20, pady=12)
+        content_frame.pack(expand=True, padx=20, pady=12)
 
         # Número del ejercicio
         numero_label = ctk.CTkLabel(
