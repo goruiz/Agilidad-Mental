@@ -94,7 +94,7 @@ class Config:
         "multiplicación": "✖️",
         "división": "➗",
         "potencia": "🔼",
-        "raiz": "✔"
+        "raiz": "✔️"
     }
 
     # Cursos
