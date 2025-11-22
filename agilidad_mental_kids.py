@@ -80,6 +80,10 @@ class Config:
     NIVEL_3_TIEMPO_PRINCIPAL = 10 * 60
     NIVEL_3_TIEMPO_MAXIMO = 12 * 60
 
+    # Tiempos especiales para potenciación y radicación
+    POTENCIA_RAIZ_TIEMPO_PRINCIPAL = 3 * 60
+    POTENCIA_RAIZ_TIEMPO_MAXIMO = 5 * 60
+
     # Ejercicios y penalización
     EJERCICIOS_POR_TABLA = 13
     MAX_INTENTOS_GENERACION = 1000
@@ -107,8 +111,9 @@ class Config:
 
     # Cursos
     CURSOS = [
-        "Segundo A", "Segundo B", "Tercero A", "Tercero B",
-        "Cuarto A", "Cuarto B", "Quinto A", "Quinto B"
+        "Segundo", "Tercero", "Cuarto", "Quinto",
+        "Sexto", "Séptimo", "Octavo", "Noveno",
+        "Décimo", "Primero BGU", "Segundo BGU", "Tercero BGU"
     ]
 
 
@@ -733,8 +738,12 @@ class AgilidadMentalApp:
         self.corriendo = False
         self.finalizado = False
 
-        # Establecer tiempos según el nivel (siempre actualizar por si cambiamos de operación)
-        if self.nivel == 1:
+        # Establecer tiempos según la operación
+        if self.operacion_actual in ["potencia", "raiz"]:
+            # Tiempos especiales para potenciación y radicación
+            self.tiempo_principal_operacion = Config.POTENCIA_RAIZ_TIEMPO_PRINCIPAL
+            self.tiempo_maximo_operacion = Config.POTENCIA_RAIZ_TIEMPO_MAXIMO
+        elif self.nivel == 1:
             self.tiempo_principal_operacion = Config.NIVEL_1_TIEMPO_PRINCIPAL
             self.tiempo_maximo_operacion = Config.NIVEL_1_TIEMPO_MAXIMO
         else:  # Nivel 2 y 3
@@ -843,17 +852,7 @@ class AgilidadMentalApp:
         ej_frame.pack(fill="x", pady=8, padx=10)
 
         content_frame = ctk.CTkFrame(ej_frame, fg_color="transparent")
-        content_frame.pack(expand=True, padx=20, pady=12)
-
-        # Número del ejercicio
-        numero_label = ctk.CTkLabel(
-            content_frame,
-            text=f"#{index + 1}",
-            font=("Comic Sans MS", 20, "bold"),
-            text_color="white",
-            width=50
-        )
-        numero_label.pack(side="left", padx=(0, 15))
+        content_frame.place(relx=0.5, rely=0.5, anchor="center")
 
         # Ejercicio
         if "^" in ejercicio["texto"]:
@@ -1087,7 +1086,9 @@ class AgilidadMentalApp:
 
         # Pregunta más compacta
         pregunta_text = "¿Hasta qué tabla quieres practicar? 🎯"
-        if tabla_minima == 2:
+        if self.operacion_actual in ["potencia", "raiz"]:
+            pregunta_text += "\n(Tablas disponibles: 2 y 3)"
+        elif tabla_minima == 2:
             pregunta_text += "\n(Comienza desde la tabla 2)"
 
         ctk.CTkLabel(
@@ -1119,11 +1120,17 @@ class AgilidadMentalApp:
         def actualizar_valor(value):
             valor_label.configure(text=f"TABLA {int(value)}")
 
+        # Limitar tablas para potenciación y radicación
+        if self.operacion_actual in ["potencia", "raiz"]:
+            tabla_maxima = 3
+        else:
+            tabla_maxima = 12
+
         slider = ctk.CTkSlider(
             main_frame,
             from_=tabla_minima,
-            to=12,
-            number_of_steps=12-tabla_minima,
+            to=tabla_maxima,
+            number_of_steps=tabla_maxima-tabla_minima,
             width=320,
             height=25,
             button_color=color_operacion,
@@ -1532,15 +1539,6 @@ class AgilidadMentalApp:
         content = ctk.CTkFrame(fila, fg_color="transparent")
         content.pack(fill="x", padx=15, pady=10)
 
-        # Número
-        ctk.CTkLabel(
-            content,
-            text=f"#{numero}",
-            font=("Comic Sans MS", 15, "bold"),
-            text_color=color_base,
-            width=40
-        ).pack(side="left", padx=(0, 5))
-
         # Ejercicio
         ctk.CTkLabel(
             content,
@@ -1716,24 +1714,28 @@ class AgilidadMentalApp:
             if self.label_tiempo_titulo:
                 self.label_tiempo_titulo.configure(text="⚠️ TIEMPO EXTRA ⚠️")
 
-            # Mostrar mensaje amigable
-            messagebox.showinfo(
-                "⏰ Tiempo Extra",
-                f"¡Ya pasaron {int(self.tiempo_principal_operacion//60)} minutos!\n\n"
-                f"Tienes {int((self.tiempo_maximo_operacion - self.tiempo_principal_operacion)//60)} minutos más para terminar.\n\n"
-                f"⚠️ Se restará 1 punto por cada minuto extra.\n\n"
-                f"¡Apúrate! 💪"
-            )
-
         # REGLA: Si llega al tiempo máximo, finalizar automáticamente esta operación
         if elapsed >= self.tiempo_maximo_operacion:
             self.detener_cronometro()
             self.test_finalizado_automaticamente = True
+
+            # Determinar qué sigue después
+            idx_actual = self.operaciones_nivel.index(self.operacion_actual)
+            es_ultima_operacion = (idx_actual == len(self.operaciones_nivel) - 1)
+
+            # Mensaje personalizado según lo que sigue
+            if es_ultima_operacion:
+                mensaje_siguiente = "Al presionar Aceptar verás el resumen final de tus resultados."
+            else:
+                siguiente_op = self.operaciones_nivel[idx_actual + 1]
+                nombre_siguiente = self.obtener_nombre_operacion(siguiente_op)
+                mensaje_siguiente = f"Al presionar Aceptar continuarás con la siguiente operación: {nombre_siguiente}."
+
             messagebox.showwarning(
                 "⏰ Tiempo Agotado",
                 f"¡Se acabó el tiempo para esta operación!\n\n"
-                f"La operación finalizará automáticamente.\n\n"
-                f"Has llegado al límite de {int(self.tiempo_maximo_operacion//60)} minutos."
+                f"Has llegado al límite de {int(self.tiempo_maximo_operacion//60)} minutos.\n\n"
+                f"{mensaje_siguiente}"
             )
             self.finalizar_operacion_automatica()
         else:
@@ -1757,21 +1759,16 @@ class AgilidadMentalApp:
             self.finalizado = True
             self._guardar_resultado(correctas, incorrectas)
 
-        # Verificar si hay más operaciones/tablas pendientes
+        # Verificar si hay más operaciones pendientes
         idx_actual = self.operaciones_nivel.index(self.operacion_actual)
         es_ultima_operacion = (idx_actual == len(self.operaciones_nivel) - 1)
-        es_ultima_tabla = (self.tabla_actual == self.tabla_max)
 
-        if es_ultima_tabla and es_ultima_operacion:
+        if es_ultima_operacion:
             # Era la última operación, mostrar resultados finales
             self.mostrar_resultados_finales()
-        elif es_ultima_tabla:
-            # Terminar con esta operación y continuar con la siguiente
-            self.mostrar_resumen_operacion_completa()
         else:
-            # Continuar con la siguiente tabla
-            self.tabla_actual += 1
-            self.mostrar_pantalla_ejercicios()
+            # Terminar con esta operación completa y continuar con la siguiente
+            self.mostrar_resumen_operacion_completa()
 
     def finalizar_operacion(self):
         """Finaliza operación actual"""
@@ -2083,15 +2080,21 @@ class AgilidadMentalApp:
         # Calcular penalización por cada operación que haya excedido el tiempo principal
         penalizacion_total = 0
 
-        # Determinar tiempo principal según el nivel
-        if self.nivel == 1:
-            tiempo_principal = Config.NIVEL_1_TIEMPO_PRINCIPAL
-        else:  # Nivel 2 y 3
-            tiempo_principal = Config.NIVEL_2_TIEMPO_PRINCIPAL
-
         # Calcular penalización por cada operación/tabla
         for r in self.resultados_operacion.values():
             tiempo_operacion = r["tiempo"]
+            operacion = r["operacion"]
+
+            # Determinar tiempo principal según la operación
+            if operacion in ["potencia", "raiz"]:
+                tiempo_principal = Config.POTENCIA_RAIZ_TIEMPO_PRINCIPAL
+                penalizacion_maxima = 2  # Máximo 2 puntos para potenciación/radicación (2 minutos extra)
+            elif self.nivel == 1:
+                tiempo_principal = Config.NIVEL_1_TIEMPO_PRINCIPAL
+                penalizacion_maxima = Config.PENALIZACION_MAXIMA
+            else:  # Nivel 2 y 3
+                tiempo_principal = Config.NIVEL_2_TIEMPO_PRINCIPAL
+                penalizacion_maxima = Config.PENALIZACION_MAXIMA
 
             if tiempo_operacion > tiempo_principal:
                 # Tiempo extra en segundos
@@ -2101,8 +2104,8 @@ class AgilidadMentalApp:
                 if tiempo_extra % 60 > 0:
                     minutos_extra += 1
 
-                # Penalización: 1 punto por minuto extra, máximo 3 puntos por operación
-                penalizacion_operacion = min(minutos_extra * Config.PENALIZACION_POR_MINUTO, Config.PENALIZACION_MAXIMA)
+                # Penalización: 1 punto por minuto extra, con máximo según la operación
+                penalizacion_operacion = min(minutos_extra * Config.PENALIZACION_POR_MINUTO, penalizacion_maxima)
                 penalizacion_total += penalizacion_operacion
 
         tiempo_total = sum(r["tiempo"] for r in self.resultados_operacion.values())
@@ -2176,13 +2179,13 @@ class AgilidadMentalApp:
             grupo = ejercicios_por_operacion[clave]
             nombre_op = self.obtener_nombre_operacion(grupo["operacion"])
             html += f"""<h2>{nombre_op} - Tabla {grupo['tabla']}</h2>
-            <table><thead><tr><th>#</th><th>Ejercicio</th><th>Tu respuesta</th>
+            <table><thead><tr><th>Ejercicio</th><th>Tu respuesta</th>
             <th>Correcta</th><th>Estado</th></tr></thead><tbody>"""
-            for idx, ej in enumerate(grupo["ejercicios"], 1):
+            for ej in grupo["ejercicios"]:
                 clase = "correcto" if ej["correcto"] else "incorrecto"
                 estado = "Correcto" if ej["correcto"] else "Incorrecto"
                 resp = ej["respuesta_usuario"] if ej["respuesta_usuario"] else "(vacío)"
-                html += f"""<tr><td>{idx}</td><td>{ej['ejercicio']}</td><td>{resp}</td>
+                html += f"""<tr><td>{ej['ejercicio']}</td><td>{resp}</td>
                 <td>{ej['respuesta_correcta']}</td><td class="{clase}">{estado}</td></tr>"""
             html += "</tbody></table>"
         html += "</body></html>"
