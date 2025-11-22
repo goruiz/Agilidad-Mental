@@ -58,8 +58,8 @@ class Config:
     COLOR_RESTA = "#90EE90"  # Verde suave (Light Green)
     COLOR_MULTIPLICACION = "#DDA0DD"  # Púrpura suave (Plum)
     COLOR_DIVISION = "#FFB6C1"  # Rosa suave (Light Pink)
-    COLOR_POTENCIA = "#F0E68C"  # Amarillo suave (Khaki)
-    COLOR_RAIZ = "#FFE4B5"  # Amarillo suave cálido (Moccasin)
+    COLOR_POTENCIA = "#B0C4DE"  # Azul grisáceo suave (Light Steel Blue)
+    COLOR_RAIZ = "#F0E68C"  # Amarillo suave (Khaki)
 
     COLOR_SUCCESS = "#4CAF50"
     COLOR_DANGER = "#F44336"
