@@ -283,7 +283,7 @@ class AgilidadMentalApp:
             header_frame,
             text="¡Elige tu nivel y demuestra lo que sabes! 💪🧠",
             font=("Comic Sans MS", 14, "bold"),
-            text_color=Config.COLOR_NARANJA_BRILLANTE
+            text_color=Config.COLOR_MORADO_BRILLANTE
         )
         mensaje_label.pack(pady=(5, 0))
 
