@@ -114,7 +114,7 @@ class Config:
 
 # ==================== APLICACIÓN PRINCIPAL ====================
 class AgilidadMentalApp:
-    """Aplicación de Agilidad Mental con diseño para niños"""
+  
 
     def __init__(self, root):
         self.root = root
@@ -127,7 +127,7 @@ class AgilidadMentalApp:
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
 
-        self.root.title("🎓 Academia Naval - Test de Agilidad Mental 🧮")
+        self.root.title("Agilidad RMmath")
 
         # Obtener dimensiones de pantalla
         screen_width = self.root.winfo_screenwidth()
@@ -186,6 +186,27 @@ class AgilidadMentalApp:
         except ValueError:
             return False
 
+    def _crear_imagen_circular(self, image, size):
+        """Convierte una imagen en circular"""
+        # Redimensionar la imagen
+        image = image.resize((size, size), Image.Resampling.LANCZOS)
+
+        # Crear una máscara circular
+        mask = Image.new('L', (size, size), 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0, size, size), fill=255)
+
+        # Convertir imagen a RGBA si no lo está
+        if image.mode != 'RGBA':
+            image = image.convert('RGBA')
+
+        # Aplicar la máscara circular
+        output = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+        output.paste(image, (0, 0))
+        output.putalpha(mask)
+
+        return output
+
     def limpiar_pantalla(self):
         """Limpia todos los widgets"""
         for widget in self.root.winfo_children():
@@ -233,22 +254,29 @@ class AgilidadMentalApp:
         header_frame = ctk.CTkFrame(main_container, fg_color="transparent")
         header_frame.pack(fill="x", pady=(20, 5))
 
+        # Logo circular en la parte superior
+        try:
+            logo_path = os.path.join(os.path.dirname(__file__), "logo.jpg")
+            if os.path.exists(logo_path) and PIL_AVAILABLE:
+                logo_img = Image.open(logo_path)
+                # Convertir el logo en circular
+                logo_circular = self._crear_imagen_circular(logo_img, 120)
+                # Usar CTkImage para evitar warnings y tener mejor escalado en HighDPI
+                ctk_logo = ctk.CTkImage(light_image=logo_circular, dark_image=logo_circular, size=(120, 120))
+
+                logo_label = ctk.CTkLabel(header_frame, image=ctk_logo, text="")
+                logo_label.pack(pady=(0, 10))
+        except Exception as e:
+            print(f"No se pudo cargar el logo en pantalla de inicio: {e}")
+
         # Título principal con estilo infantil
         title_label = ctk.CTkLabel(
             header_frame,
             text="🌟 ¡AGILIDAD MENTAL! 🌟",
             font=("Comic Sans MS", 40, "bold"),
-            text_color=Config.COLOR_MORADO_BRILLANTE
-        )
-        title_label.pack(pady=(0, 5))
-
-        subtitle_label = ctk.CTkLabel(
-            header_frame,
-            text="Academia Naval Cap. Leonardo Abad Guerra",
-            font=("Comic Sans MS", 16),
             text_color=Config.COLOR_AZUL_BRILLANTE
         )
-        subtitle_label.pack()
+        title_label.pack(pady=(0, 10))
 
         # Mensaje motivador
         mensaje_label = ctk.CTkLabel(
