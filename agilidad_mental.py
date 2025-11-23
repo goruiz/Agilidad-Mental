@@ -207,6 +207,18 @@ class AgilidadMentalApp:
         except ValueError:
             return False
 
+    def validar_nombre(self, valor):
+        """Valida que el nombre no exceda 50 caracteres y no contenga números"""
+        if len(valor) > 50:
+            return False
+        # Permitir vacío, espacios y letras, pero no números
+        if valor == "":
+            return True
+        # Rechazar si contiene dígitos
+        if any(char.isdigit() for char in valor):
+            return False
+        return True
+
     def _crear_imagen_circular(self, image, size):
         """Convierte una imagen en circular"""
         # Redimensionar la imagen
@@ -654,7 +666,8 @@ class AgilidadMentalApp:
             dropdown_fg_color="white",
             dropdown_hover_color="#F0F0F0",
             border_color=color_nivel,
-            border_width=2
+            border_width=2,
+            state="readonly"
         )
         self.combo_curso.set("👉 Selecciona tu curso")
         self.combo_curso.pack(pady=(0, 10))
@@ -740,6 +753,9 @@ class AgilidadMentalApp:
         )
         label.pack(fill="x", pady=(0, 6))
 
+        # Validación para limitar a 40 caracteres
+        vcmd_nombre = (self.root.register(self.validar_nombre), '%P')
+
         entry = ctk.CTkEntry(
             parent,
             font=("Comic Sans MS", 15),
@@ -748,7 +764,9 @@ class AgilidadMentalApp:
             corner_radius=12,
             placeholder_text=placeholder,
             border_color=color,
-            border_width=2
+            border_width=2,
+            validate="key",
+            validatecommand=vcmd_nombre
         )
         entry.pack(pady=(0, 10))
         return entry
@@ -1002,7 +1020,7 @@ class AgilidadMentalApp:
                 content_frame,
                 text=ejercicio["texto"],
                 font=("Comic Sans MS", 24, "bold"),
-                text_color="white",
+                text_color="black",
                 width=250,
                 anchor="e"
             ).pack(side="left", padx=(0, 20))
@@ -1020,7 +1038,9 @@ class AgilidadMentalApp:
             border_color="white",
             border_width=3,
             fg_color=color,
-            text_color="white"
+            text_color="black",
+            validate="key",
+            validatecommand=vcmd
         )
         entry.pack(side="left")
         self.entries[ejercicio["id"]] = entry
@@ -1049,11 +1069,11 @@ class AgilidadMentalApp:
         exp_part = parts[1].replace("=", "").strip()
 
         Label(op_frame, text=base, font=("Comic Sans MS", 24, "bold"),
-              bg=bg_color, fg="white").pack(side="left")
+              bg=bg_color, fg="black").pack(side="left")
         Label(op_frame, text=exp_part, font=("Comic Sans MS", 14, "bold"),
-              bg=bg_color, fg="white").pack(side="left", anchor="n")
+              bg=bg_color, fg="black").pack(side="left", anchor="n")
         Label(op_frame, text=" =", font=("Comic Sans MS", 24, "bold"),
-              bg=bg_color, fg="white").pack(side="left")
+              bg=bg_color, fg="black").pack(side="left")
 
     def _crear_panel_controles_divertido(self, parent):
         """Panel de controles con diseño basado en operación"""
@@ -1809,6 +1829,14 @@ class AgilidadMentalApp:
             return {"texto": texto, "respuesta": num}
         return None
 
+    def _focus_next_entry(self, event, next_entry):
+        """Mueve el foco al siguiente entry cuando se presiona Tab"""
+        next_entry.focus_set()
+        # Seleccionar todo el texto si el entry tiene contenido
+        if next_entry.get():
+            next_entry.select_range(0, "end")
+        return "break"  # Previene el comportamiento por defecto de Tab
+
     def iniciar_cronometro(self):
         """Inicia cronómetro"""
         if self.finalizado:
@@ -1819,9 +1847,17 @@ class AgilidadMentalApp:
             self.tiempo_inicio = datetime.now() - timedelta(seconds=self.tiempo_operacion_actual)
             self.corriendo = True
 
-            # Habilitar entries para escribir
-            for entry in self.entries.values():
+            # Habilitar entries para escribir y configurar navegación con Tab
+            entry_list = list(self.entries.values())
+            for i, entry in enumerate(entry_list):
                 entry.configure(state="normal")
+                # Configurar navegación con Tab
+                if i < len(entry_list) - 1:
+                    next_entry = entry_list[i + 1]
+                    entry.bind("<Tab>", lambda e, next_e=next_entry: self._focus_next_entry(e, next_e))
+                else:
+                    # En el último entry, Tab va al primero
+                    entry.bind("<Tab>", lambda e, next_e=entry_list[0]: self._focus_next_entry(e, next_e))
 
             # El botón finalizar ya está habilitado desde el inicio
             # No necesitamos cambiar su estado
