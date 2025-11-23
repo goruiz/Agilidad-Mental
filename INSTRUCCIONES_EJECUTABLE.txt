@@ -1,0 +1,75 @@
+================================================================
+INSTRUCCIONES PARA CREAR EL EJECUTABLE - AGILIDAD RMmath
+================================================================
+
+MÉTODO 1: AUTOMÁTICO (RECOMENDADO)
+-----------------------------------
+1. Hacer doble clic en el archivo: crear_ejecutable.bat
+2. Esperar a que termine el proceso
+3. El ejecutable estará en la carpeta: dist\Agilidad RMmath.exe
+
+
+MÉTODO 2: MANUAL (PASO A PASO)
+-------------------------------
+1. Abrir CMD o PowerShell en la carpeta del proyecto
+
+2. Instalar PyInstaller:
+   pip install pyinstaller
+
+3. Crear el ejecutable:
+   pyinstaller --onefile --windowed --icon=logo.ico --add-data "logo.ico;." --add-data "logo.jpg;." --name "Agilidad RMmath" agilidad_mental.py
+
+4. El ejecutable estará en: dist\Agilidad RMmath.exe
+
+
+EXPLICACIÓN DE LOS PARÁMETROS:
+-------------------------------
+--onefile        : Crea un solo archivo .exe (más fácil de distribuir)
+--windowed       : No muestra la consola negra (solo la ventana de la app)
+--icon=logo.ico  : Usa logo.ico como ícono del ejecutable
+--add-data       : Incluye archivos necesarios (logo.ico y logo.jpg)
+--name           : Nombre del ejecutable final ("Agilidad RMmath")
+
+
+NOTAS IMPORTANTES:
+------------------
+- El proceso puede tardar 1-2 minutos
+- Se crearán carpetas "build" y "dist"
+- El ejecutable final está en: dist\Agilidad RMmath.exe
+- Puedes eliminar las carpetas "build" y "__pycache__" después
+- El archivo .spec generado puede guardarse para futuras compilaciones
+
+
+DISTRIBUCIÓN:
+-------------
+Para distribuir la aplicación, solo necesitas el archivo:
+dist\Agilidad RMmath.exe
+
+Este archivo ya incluye:
+- logo.ico (como ícono del ejecutable Y para la barra de título)
+- logo.jpg
+- Todas las librerías Python necesarias
+
+
+CAMBIOS RECIENTES:
+------------------
+✅ Se corrigió el error "bitmap logo.ico not defined"
+✅ Ahora el ejecutable encuentra correctamente los archivos empaquetados
+✅ Se agregó la función resource_path() para manejar rutas en PyInstaller
+
+
+SOLUCIÓN DE PROBLEMAS:
+----------------------
+Si aparece error "logo.ico not found":
+- Verifica que logo.ico esté en la misma carpeta que agilidad_mental.py
+
+Si aparece error de módulos:
+- Ejecuta: pip install customtkinter pillow tkcalendar
+
+Si el antivirus bloquea el ejecutable:
+- Es normal, agrega una excepción en tu antivirus
+
+Si persisten los errores:
+- Elimina las carpetas "build" y "dist"
+- Elimina el archivo "Agilidad RMmath.spec"
+- Vuelve a ejecutar crear_ejecutable.bat

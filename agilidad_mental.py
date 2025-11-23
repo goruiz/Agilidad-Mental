@@ -3,6 +3,7 @@ from tkinter import messagebox
 from datetime import datetime, timedelta
 import random
 import os
+import sys
 import tempfile
 import subprocess
 import platform
@@ -24,6 +25,18 @@ try:
     WINSOUND_AVAILABLE = True
 except ImportError:
     WINSOUND_AVAILABLE = False
+
+
+# ==================== FUNCIÓN PARA RUTAS DE RECURSOS ====================
+def resource_path(relative_path):
+    """Obtiene la ruta absoluta del recurso, funciona para dev y para PyInstaller"""
+    try:
+        # PyInstaller crea una carpeta temporal y guarda la ruta en _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 
 # ==================== CONFIGURACIÓN Y CONSTANTES ====================
@@ -264,7 +277,7 @@ class AgilidadMentalApp:
 
         # Logo circular en la parte superior
         try:
-            logo_path = os.path.join(os.path.dirname(__file__), "logo.jpg")
+            logo_path = resource_path("logo.jpg")
             if os.path.exists(logo_path) and PIL_AVAILABLE:
                 logo_img = Image.open(logo_path)
                 # Convertir el logo en circular
@@ -458,7 +471,7 @@ class AgilidadMentalApp:
         cal_window = ctk.CTkToplevel(self.root)
         cal_window.title("📅 Seleccionar Fecha")
         try:
-            cal_window.iconbitmap("logo.ico")
+            cal_window.iconbitmap(resource_path("logo.ico"))
         except:
             pass
         cal_window.transient(self.root)
@@ -1178,7 +1191,7 @@ class AgilidadMentalApp:
         dialog = ctk.CTkToplevel(self.root)
         dialog.title(f"{nombre_op}")
         try:
-            dialog.iconbitmap("logo.ico")
+            dialog.iconbitmap(resource_path("logo.ico"))
         except:
             pass
         dialog.transient(self.root)
@@ -1556,7 +1569,7 @@ class AgilidadMentalApp:
         ventana = ctk.CTkToplevel(self.root)
         ventana.title("📝 Mis Respuestas")
         try:
-            ventana.iconbitmap("logo.ico")
+            ventana.iconbitmap(resource_path("logo.ico"))
         except:
             pass
 
@@ -2386,6 +2399,6 @@ class AgilidadMentalApp:
 # ==================== INICIO ====================
 if __name__ == "__main__":
     root = ctk.CTk()
-    root.iconbitmap("logo.ico")
+    root.iconbitmap(resource_path("logo.ico"))
     app = AgilidadMentalApp(root)
     root.mainloop()
