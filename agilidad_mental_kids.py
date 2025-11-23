@@ -1653,7 +1653,7 @@ class AgilidadMentalApp:
         elif operacion == "multiplicación":
             return {"texto": f"{tabla} × {num} =", "respuesta": tabla * num}
         elif operacion == "potencia":
-            return {"texto": f"{tabla}^{num} =", "respuesta": tabla ** num}
+            return {"texto": f"{num}^{tabla} =", "respuesta": num ** tabla}
         elif operacion == "raiz":
             radicando = num ** tabla
             if tabla == 2:
@@ -2255,5 +2255,6 @@ class AgilidadMentalApp:
 # ==================== INICIO ====================
 if __name__ == "__main__":
     root = ctk.CTk()
+    root.iconbitmap("logo.ico")
     app = AgilidadMentalApp(root)
     root.mainloop()
