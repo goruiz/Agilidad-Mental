@@ -14,7 +14,7 @@ except ImportError:
     PIL_AVAILABLE = False
 
 try:
-    from tkcalendar import DateEntry
+    from tkcalendar import DateEntry, Calendar
     TKCALENDAR_AVAILABLE = True
 except ImportError:
     TKCALENDAR_AVAILABLE = False
@@ -448,6 +448,127 @@ class AgilidadMentalApp:
         b = int(b + (255 - b) * 0.5)
         return f'#{r:02x}{g:02x}{b:02x}'
 
+    def abrir_calendario(self):
+        """Abre ventana con calendario para seleccionar fecha"""
+        if not TKCALENDAR_AVAILABLE:
+            messagebox.showinfo("📅", "Para usar el calendario instala: pip install tkcalendar")
+            return
+
+        # Crear ventana de calendario
+        cal_window = ctk.CTkToplevel(self.root)
+        cal_window.title("📅 Seleccionar Fecha")
+        try:
+            cal_window.iconbitmap("logo.ico")
+        except:
+            pass
+        cal_window.transient(self.root)
+        cal_window.grab_set()
+
+        # Tamaño de la ventana
+        width, height = 350, 400
+        cal_window.geometry(f"{width}x{height}")
+
+        # Centrar ventana
+        cal_window.update_idletasks()
+        x = (cal_window.winfo_screenwidth() - width) // 2
+        y = (cal_window.winfo_screenheight() - height) // 2
+        cal_window.geometry(f"{width}x{height}+{x}+{y}")
+        cal_window.resizable(False, False)
+
+        # Frame principal
+        main_frame = ctk.CTkFrame(cal_window, fg_color="white")
+        main_frame.pack(fill="both", expand=True, padx=15, pady=15)
+
+        # Título
+        ctk.CTkLabel(
+            main_frame,
+            text="📅 Selecciona una Fecha",
+            font=("Comic Sans MS", 18, "bold"),
+            text_color=Config.COLOR_AZUL_BRILLANTE
+        ).pack(pady=(10, 15))
+
+        # Calendario
+        cal = Calendar(
+            main_frame,
+            selectmode='day',
+            date_pattern='dd/mm/yyyy',
+            locale='es_ES',
+            showweeknumbers=False,
+            background=Config.COLOR_AZUL_BRILLANTE,
+            foreground='white',
+            selectbackground=Config.COLOR_VERDE_BRILLANTE,
+            selectforeground='white',
+            normalbackground='white',
+            normalforeground='black',
+            weekendbackground='#F0F0F0',
+            weekendforeground='black',
+            headersbackground=Config.COLOR_AZUL_BRILLANTE,
+            headersforeground='white',
+            borderwidth=2
+        )
+
+        # Obtener fecha actual del entry si es válida
+        try:
+            fecha_actual = self.entry_fecha.get()
+            if fecha_actual:
+                cal.selection_set(datetime.strptime(fecha_actual, "%d/%m/%Y"))
+        except:
+            cal.selection_set(datetime.now())
+
+        cal.pack(pady=10, padx=10)
+
+        # Frame para botones
+        buttons_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        buttons_frame.pack(pady=15)
+
+        def seleccionar_fecha():
+            """Actualiza el campo de fecha con la fecha seleccionada"""
+            fecha_seleccionada = cal.get_date()
+            self.entry_fecha.delete(0, 'end')
+            self.entry_fecha.insert(0, fecha_seleccionada)
+            cal_window.destroy()
+
+        def cancelar():
+            """Cierra el calendario sin cambios"""
+            cal_window.destroy()
+
+        # Botón Aceptar
+        ctk.CTkButton(
+            buttons_frame,
+            text="✅ Aceptar",
+            font=("Comic Sans MS", 14, "bold"),
+            width=120,
+            height=35,
+            corner_radius=15,
+            fg_color=Config.COLOR_VERDE_BRILLANTE,
+            hover_color=self._aclarar_color(Config.COLOR_VERDE_BRILLANTE),
+            text_color="white",
+            command=seleccionar_fecha
+        ).pack(side="left", padx=5)
+
+        # Botón Cancelar
+        ctk.CTkButton(
+            buttons_frame,
+            text="❌ Cancelar",
+            font=("Comic Sans MS", 14, "bold"),
+            width=120,
+            height=35,
+            corner_radius=15,
+            fg_color=Config.COLOR_ROJO_BRILLANTE,
+            hover_color=self._aclarar_color(Config.COLOR_ROJO_BRILLANTE),
+            text_color="white",
+            command=cancelar
+        ).pack(side="left", padx=5)
+
+        # Atajos de teclado
+        cal_window.bind('<Return>', lambda e: seleccionar_fecha())
+        cal_window.bind('<Escape>', lambda e: cancelar())
+
+        # Llevar ventana al frente
+        cal_window.lift()
+        cal_window.attributes('-topmost', True)
+        cal_window.after(100, lambda: cal_window.attributes('-topmost', False))
+
     # ==================== PANTALLA DE DATOS ====================
     def mostrar_pantalla_datos(self):
         """Formulario de datos super amigable"""
@@ -535,29 +656,35 @@ class AgilidadMentalApp:
         )
         fecha_label.pack(fill="x", pady=(10, 6))
 
-        if TKCALENDAR_AVAILABLE:
-            self.entry_fecha = DateEntry(
-                content_frame,
-                font=("Comic Sans MS", 13),
-                width=47,
-                borderwidth=2,
-                date_pattern='dd/mm/yyyy',
-                locale='es_ES'
-            )
-            self.entry_fecha.set_date(datetime.now())
-        else:
-            self.entry_fecha = ctk.CTkEntry(
-                content_frame,
-                font=("Comic Sans MS", 15),
-                width=420,
-                height=40,
-                corner_radius=12,
-                border_color=color_nivel,
-                border_width=2
-            )
-            self.entry_fecha.insert(0, self.fecha)
+        # Frame para fecha + botón calendario
+        fecha_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        fecha_frame.pack(pady=(0, 20))
 
-        self.entry_fecha.pack(pady=(0, 20))
+        self.entry_fecha = ctk.CTkEntry(
+            fecha_frame,
+            font=("Comic Sans MS", 15),
+            width=340,
+            height=40,
+            corner_radius=12,
+            border_color=color_nivel,
+            border_width=2
+        )
+        self.entry_fecha.insert(0, self.fecha)
+        self.entry_fecha.pack(side="left", padx=(0, 10))
+
+        # Botón calendario
+        btn_calendario = ctk.CTkButton(
+            fecha_frame,
+            text="📅",
+            font=("Segoe UI Emoji", 20),
+            width=60,
+            height=40,
+            corner_radius=12,
+            fg_color=color_nivel,
+            hover_color=self._aclarar_color(color_nivel),
+            command=self.abrir_calendario
+        )
+        btn_calendario.pack(side="left")
 
         # Botón comenzar
         btn_comenzar = ctk.CTkButton(
@@ -1050,6 +1177,10 @@ class AgilidadMentalApp:
         # Dialog moderno con tamaño fijo
         dialog = ctk.CTkToplevel(self.root)
         dialog.title(f"{nombre_op}")
+        try:
+            dialog.iconbitmap("logo.ico")
+        except:
+            pass
         dialog.transient(self.root)
         dialog.grab_set()
 
@@ -1424,6 +1555,10 @@ class AgilidadMentalApp:
 
         ventana = ctk.CTkToplevel(self.root)
         ventana.title("📝 Mis Respuestas")
+        try:
+            ventana.iconbitmap("logo.ico")
+        except:
+            pass
 
         # Ventana más pequeña
         width, height = 900, 650
@@ -1609,11 +1744,7 @@ class AgilidadMentalApp:
 
         self.nombre = nombre
         self.curso = curso
-
-        if TKCALENDAR_AVAILABLE:
-            self.fecha = self.entry_fecha.get_date().strftime("%d/%m/%Y")
-        else:
-            self.fecha = self.entry_fecha.get()
+        self.fecha = self.entry_fecha.get()
 
         self.resultados_operacion = {}
         self.operacion_actual = ""
