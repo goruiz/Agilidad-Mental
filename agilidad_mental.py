@@ -937,10 +937,11 @@ class AgilidadMentalApp:
 
         # Frame principal
         main_frame = ctk.CTkFrame(self.root, fg_color="#E3F2FD")
-        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        main_frame.pack(fill="both", expand=True, padx=15, pady=15)
 
-        main_frame.grid_columnconfigure(0, weight=3)
-        main_frame.grid_columnconfigure(1, weight=1)
+        # Distribución optimizada del espacio: 70% ejercicios, 30% controles
+        main_frame.grid_columnconfigure(0, weight=7, minsize=600)
+        main_frame.grid_columnconfigure(1, weight=3, minsize=250)
         main_frame.grid_rowconfigure(0, weight=1)
 
         # Panel de ejercicios (izquierda)
@@ -962,7 +963,7 @@ class AgilidadMentalApp:
             border_width=5,
             border_color=color_operacion
         )
-        ejercicios_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 15))
+        ejercicios_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
 
         # Encabezado con color de la operación
         nombre_op = self.obtener_nombre_operacion(self.operacion_actual)
@@ -972,23 +973,23 @@ class AgilidadMentalApp:
             ejercicios_frame,
             fg_color=color_operacion,
             corner_radius=20,
-            height=100
+            height=80
         )
-        header.pack(fill="x", padx=20, pady=20)
+        header.pack(fill="x", padx=15, pady=15)
 
         ctk.CTkLabel(
             header,
             text=f"{emoji_op} {nombre_op} - Tabla del {self.tabla_actual} {emoji_op}",
-            font=("Comic Sans MS", 32, "bold"),
+            font=("Comic Sans MS", 30, "bold"),
             text_color="white"
-        ).pack(pady=20)
+        ).pack(pady=15)
 
         # Scrollable frame para ejercicios
         scroll_frame = ctk.CTkScrollableFrame(
             ejercicios_frame,
             fg_color="transparent"
         )
-        scroll_frame.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        scroll_frame.pack(fill="both", expand=True, padx=15, pady=(0, 15))
 
         # Crear ejercicios con dos colores alternados de la operación
         self.entries = {}
@@ -1005,9 +1006,9 @@ class AgilidadMentalApp:
             parent,
             fg_color=color,
             corner_radius=15,
-            height=70
+            height=65
         )
-        ej_frame.pack(fill="x", pady=8, padx=10)
+        ej_frame.pack(fill="x", pady=6, padx=5)
 
         content_frame = ctk.CTkFrame(ej_frame, fg_color="transparent")
         content_frame.place(relx=0.5, rely=0.5, anchor="center")
@@ -1082,7 +1083,7 @@ class AgilidadMentalApp:
         color_operacion_oscuro = self._oscurecer_color(color_operacion)
 
         controles_frame = ctk.CTkFrame(parent, fg_color="transparent")
-        controles_frame.grid(row=0, column=1, sticky="nsew", padx=(15, 0))
+        controles_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
 
         # Cronómetro con color de la operación
         self.cronometro_frame = ctk.CTkFrame(
