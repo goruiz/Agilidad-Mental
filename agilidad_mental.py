@@ -939,9 +939,9 @@ class AgilidadMentalApp:
         main_frame = ctk.CTkFrame(self.root, fg_color="#E3F2FD")
         main_frame.pack(fill="both", expand=True, padx=15, pady=15)
 
-        # Distribución optimizada del espacio: 70% ejercicios, 30% controles
-        main_frame.grid_columnconfigure(0, weight=7, minsize=600)
-        main_frame.grid_columnconfigure(1, weight=3, minsize=250)
+        # Distribución optimizada del espacio: panel de ejercicios flexible, panel de controles fijo
+        main_frame.grid_columnconfigure(0, weight=1, minsize=650)  # Panel ejercicios se expande
+        main_frame.grid_columnconfigure(1, weight=0, minsize=280)  # Panel controles ancho fijo
         main_frame.grid_rowconfigure(0, weight=1)
 
         # Panel de ejercicios (izquierda)
@@ -1082,26 +1082,27 @@ class AgilidadMentalApp:
         color_operacion = self.obtener_color_operacion(self.operacion_actual)
         color_operacion_oscuro = self._oscurecer_color(color_operacion)
 
-        controles_frame = ctk.CTkFrame(parent, fg_color="transparent")
-        controles_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
+        controles_frame = ctk.CTkFrame(parent, fg_color="transparent", width=280)
+        controles_frame.grid(row=0, column=1, sticky="ns", padx=(10, 0))
+        controles_frame.grid_propagate(False)  # Mantener ancho fijo
 
         # Cronómetro con color de la operación
         self.cronometro_frame = ctk.CTkFrame(
             controles_frame,
             fg_color=color_operacion,
-            corner_radius=20,
-            border_width=5,
+            corner_radius=15,
+            border_width=3,
             border_color=color_operacion_oscuro
         )
-        self.cronometro_frame.pack(fill="x", pady=(0, 20))
+        self.cronometro_frame.pack(fill="x", pady=(0, 15))
 
         self.label_tiempo_titulo = ctk.CTkLabel(
             self.cronometro_frame,
-            text="⏱️ TIEMPO ⏱️",
-            font=("Comic Sans MS", 20, "bold"),
+            text="⏱️ TIEMPO",
+            font=("Comic Sans MS", 16, "bold"),
             text_color="white"
         )
-        self.label_tiempo_titulo.pack(pady=(20, 10))
+        self.label_tiempo_titulo.pack(pady=(12, 5))
 
         mins = int(self.tiempo_operacion_actual // 60)
         secs = int(self.tiempo_operacion_actual % 60)
@@ -1109,83 +1110,86 @@ class AgilidadMentalApp:
         self.label_tiempo = ctk.CTkLabel(
             self.cronometro_frame,
             text=f"{mins:02d}:{secs:02d}",
-            font=("Comic Sans MS", 56, "bold"),
+            font=("Comic Sans MS", 48, "bold"),
             text_color="white"
         )
-        self.label_tiempo.pack(pady=(0, 20))
+        self.label_tiempo.pack(pady=(0, 12))
 
         # Info estudiante con color de la operación (aclarado)
         color_operacion_claro = self._aclarar_color(color_operacion)
         info_frame = ctk.CTkFrame(
             controles_frame,
             fg_color=color_operacion_claro,
-            corner_radius=20
+            corner_radius=15
         )
-        info_frame.pack(fill="x", pady=(0, 20))
+        info_frame.pack(fill="x", pady=(0, 15))
 
         ctk.CTkLabel(
             info_frame,
             text="👤",
-            font=("Segoe UI Emoji", 40)
-        ).pack(pady=(15, 5))
+            font=("Segoe UI Emoji", 32)
+        ).pack(pady=(10, 5))
 
+        # Nombre con ajuste automático de tamaño si es muy largo
+        nombre_font_size = 16 if len(self.nombre) > 25 else 18
         ctk.CTkLabel(
             info_frame,
             text=self.nombre,
-            font=("Comic Sans MS", 18, "bold"),
-            text_color="white"
-        ).pack(pady=(0, 5))
+            font=("Comic Sans MS", nombre_font_size, "bold"),
+            text_color="white",
+            wraplength=250  # Ajustar texto si es muy largo
+        ).pack(pady=(0, 5), padx=5)
 
         ctk.CTkLabel(
             info_frame,
             text=self.curso,
-            font=("Comic Sans MS", 16),
+            font=("Comic Sans MS", 14),
             text_color="white"
-        ).pack(pady=(0, 15))
+        ).pack(pady=(0, 10))
 
         # Botón Finalizar
         self.boton_finalizar = ctk.CTkButton(
             controles_frame,
             text="⏹️ FINALIZAR",
-            font=("Comic Sans MS", 22, "bold"),
-            width=220,
-            height=70,
-            corner_radius=20,
+            font=("Comic Sans MS", 18, "bold"),
+            width=260,
+            height=55,
+            corner_radius=15,
             fg_color=Config.COLOR_ROJO_BRILLANTE,
             hover_color=self._aclarar_color(Config.COLOR_ROJO_BRILLANTE),
             text_color="white",
             command=self.finalizar_operacion
         )
-        self.boton_finalizar.pack(pady=(0, 15))
+        self.boton_finalizar.pack(pady=(0, 12))
 
-        # Botón Ver Resultados - con mejor tamaño y espaciado
+        # Botón Ver Resultados
         ctk.CTkButton(
             controles_frame,
-            text="📊 VER RESULTADOS",
-            font=("Comic Sans MS", 16, "bold"),
-            width=220,
-            height=65,
-            corner_radius=20,
+            text="📊 RESULTADOS",
+            font=("Comic Sans MS", 15, "bold"),
+            width=260,
+            height=50,
+            corner_radius=15,
             fg_color=color_operacion,
             hover_color=self._aclarar_color(color_operacion),
             text_color="white",
             command=self.mostrar_resultados_operacion
-        ).pack(pady=(0, 15))
+        ).pack(pady=(0, 12))
 
         if self._debe_mostrar_boton_siguiente():
-            texto = "➡️ SIGUIENTE TABLA" if self.tabla_actual < self.tabla_max else "➡️ SIGUIENTE OPERACIÓN"
+            texto = "➡️ SIGUIENTE" if self.tabla_actual < self.tabla_max else "➡️ SIG. OPERACIÓN"
             ctk.CTkButton(
                 controles_frame,
                 text=texto,
-                font=("Comic Sans MS", 15, "bold"),
-                width=220,
-                height=65,
-                corner_radius=20,
+                font=("Comic Sans MS", 14, "bold"),
+                width=260,
+                height=50,
+                corner_radius=15,
                 fg_color=color_operacion_oscuro,
                 hover_color=self._aclarar_color(color_operacion_oscuro),
                 text_color="white",
                 command=self.siguiente_operacion
-            ).pack(pady=(0, 15))
+            ).pack(pady=(0, 12))
 
         # Guardamos la referencia del botón iniciar como None ya que no existe
         self.boton_iniciar = None
